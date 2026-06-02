@@ -1,4 +1,0 @@
-https://192.168.1.44:8443 {
-    tls internal
-    reverse_proxy localhost:5000
-}
