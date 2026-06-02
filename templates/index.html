@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Consulta OF - Sage X3</title>
+
+    <link rel="stylesheet" href="/static/css/estilo.css">
+</head>
+
+<body>
+
+    <!-- CABECERA -->
+    <header class="cabecera">
+        <div class="cabecera-contenido">
+            <h1>Consulta de Órdenes de Fabricación</h1>
+            <p>Sage X3 - Sistema de Producción</p>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="contenido">
+
+        <!-- TARJETA DE BÚSQUEDA -->
+        <div class="tarjeta busqueda">
+
+            <h2>Introduzca o escanee el número de OF</h2>
+
+            <div class="input-grupo">
+                <input
+                    type="text"
+                    id="inputOF"
+                    placeholder="Ej: OF112611971"
+                    autocomplete="off"
+                    autocapitalize="characters"
+                >
+
+                <button id="btnBuscar" onclick="buscarOF()">
+                    Buscar
+                </button>
+            </div>
+
+            <!-- BOTON DE CAMARA -->
+            <button id="btnScan" onclick="activarCamara()" class="btn-camara">
+                Escanear con camara
+            </button>
+
+            <!-- VENTANA DEL ESCANER (oculta hasta que se pulsa el boton) -->
+            <div id="zonaScanner" class="zona-scanner oculto">
+                <div id="visorCamara"></div>
+                <p class="ayuda-scan">Apunta al código de barras o QR</p>
+                <button onclick="pararCamara()" class="btn-parar">Cancelar</button>
+            </div>
+
+            <p class="ayuda">
+                Escribe el número de OF y pulsa Buscar,
+                o utiliza el lector de códigos.
+            </p>
+
+        </div>
+
+        <!-- ÁREA DE MENSAJES -->
+        <div id="mensaje" class="mensaje oculto"></div>
+
+        <!-- PANEL DE RESULTADOS -->
+        <div id="resultados" class="oculto">
+
+            <!-- DATOS GENERALES DE LA OF -->
+            <div class="tarjeta">
+
+                <h2 class="seccion-titulo">
+                    Información general
+                </h2>
+
+                <div class="grid-datos">
+
+                    <div class="dato">
+                        <span class="etiqueta">Número OF</span>
+                        <span id="rNumOf" class="valor"></span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="etiqueta">Estado</span>
+                        <span id="rEstado" class="valor estado-badge"></span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="etiqueta">Fecha inicio</span>
+                        <span id="rFecha" class="valor"></span>
+                    </div>
+
+                    <div class="dato placeholder"></div>
+
+                    <div class="dato">
+                        <span class="etiqueta">Artículo final</span>
+                        <span id="rArticulo" class="valor cod"></span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="etiqueta">Descripción</span>
+                        <span id="rDescArticulo" class="valor cod"></span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="etiqueta">EAN artículo</span>
+                        <span id="rEan" class="valor cod"></span>
+                    </div>
+
+                    <div class="dato">
+                        <span class="etiqueta">Cantidad lanzada</span>
+                        <span id="rQtyLanzada" class="valor cod"></span>
+                    </div>
+
+
+                </div>
+
+            </div>
+
+            <!-- TABLA DE COMPONENTES -->
+            <div class="tarjeta">
+
+                <h2 class="seccion-titulo">
+                    Componentes
+                    <span id="totalComp" class="badge"></span>
+                </h2>
+
+                <div class="tabla-scroll">
+
+                    <table id="tablaComp" class="tabla-comp">
+
+                        <thead>
+                            <tr>
+                                <th>Componente</th>
+                                <th>Descripción</th>
+                                <th>Estado línea</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="cuerpoTabla">
+                            <!-- Se rellena dinámicamente desde JavaScript -->
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+        <!-- Fin resultados -->
+
+    </main>
+
+    <script src="/static/js/app.js"></script>
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+</body>
+
+</html>

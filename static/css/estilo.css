@@ -1,0 +1,360 @@
+/* =====================================================
+   estilo.css - Diseño de la app OF Sage X3
+===================================================== */
+
+/* =====================================================
+   RESET GENERAL
+===================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+
+/* =====================================================
+   CABECERA
+===================================================== */
+
+.cabecera {
+    background: linear-gradient(
+        135deg,
+        #0f2a5e 0%,
+        #1d4ed8 100%
+    );
+    color: white;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cabecera h1 {
+    font-size: clamp(18px, 4vw, 26px);
+    margin-bottom: 4px;
+}
+
+.cabecera p {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+
+/* =====================================================
+   CONTENEDOR PRINCIPAL
+===================================================== */
+
+.contenido {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+
+/* =====================================================
+   TARJETAS
+===================================================== */
+
+.tarjeta {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-top: 4px solid #1d4ed8;
+}
+
+.tarjeta h2 {
+    font-size: 16px;
+    color: #0f2a5e;
+    margin-bottom: 16px;
+}
+
+
+/* =====================================================
+   BÚSQUEDA
+===================================================== */
+
+.input-grupo {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.input-grupo input {
+    flex: 1;
+    padding: 14px 16px;
+    font-size: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+    font-family: "Courier New", monospace;
+    letter-spacing: 1px;
+    transition: border-color 0.2s;
+}
+
+.input-grupo input:focus {
+    border-color: #1d4ed8;
+}
+
+.input-grupo button {
+    padding: 14px 28px;
+    background: #1d4ed8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-width: 100px;
+}
+
+.input-grupo button:hover {
+    background: #1e40af;
+}
+
+.input-grupo button:active {
+    background: #1e3a8a;
+}
+
+.input-grupo button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.ayuda {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+
+/* =====================================================
+   MENSAJES
+===================================================== */
+
+.mensaje {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.mensaje.cargando {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-left: 4px solid #1d4ed8;
+}
+
+.mensaje.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-left: 4px solid #b91c1c;
+}
+
+.oculto {
+    display: none;
+}
+
+
+/* =====================================================
+   DATOS GENERALES DE LA OF
+===================================================== */
+
+.grid-datos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.dato {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dato.placeholder {
+    visibility: hidden;
+}
+
+.etiqueta {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+.valor {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.valor.cod {
+    font-family: "Courier New", monospace;
+    color: #1d4ed8;
+}
+
+.estado-badge {
+    display: inline-block;
+    background: #dcfce7;
+    color: #15803d;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid #16a34a;
+}
+
+
+/* =====================================================
+   TÍTULOS DE SECCIÓN
+===================================================== */
+
+.seccion-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.badge {
+    background: #1d4ed8;
+    color: white;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   TABLA DE COMPONENTES
+===================================================== */
+
+.tabla-scroll {
+    overflow-x: auto;
+}
+
+.tabla-comp {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.tabla-comp th {
+    background: #0f2a5e;
+    color: white;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabla-comp td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+.tabla-comp tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.tabla-comp tr:hover td {
+    background: #eff6ff;
+}
+
+.td-cod {
+    font-family: "Courier New", monospace;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.td-cant {
+    font-weight: 700;
+    color: #0f2a5e;
+    font-size: 16px;
+}
+
+
+/* =====================================================
+   RESPONSIVE - MÓVILES
+===================================================== */
+
+@media (max-width: 600px) {
+
+    .input-grupo {
+        flex-direction: column;
+    }
+
+    .dato.doble {
+        grid-column: span 1;
+    }
+
+    .tarjeta {
+        padding: 16px;
+    }
+
+}
+
+
+/* Boton de camara */
+.btn-camara {
+    width: 100%;
+    padding: 13px;
+    margin-top: 10px;
+    background: #15803D;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-camara:hover  { background: #166534; }
+.btn-camara.oculto { display: none; }
+
+/* Zona del video del escaner */
+.zona-scanner {
+    margin-top: 14px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #15803D;
+    background: #000;
+    position: relative;
+}
+.zona-scanner video {
+    width: 100%;
+    max-height: 300px;
+    display: block;
+    object-fit: cover;
+}
+.ayuda-scan {
+    color: white;
+    background: rgba(0,0,0,0.6);
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+}
+.btn-parar {
+    width: 100%;
+    padding: 12px;
+    background: #B91C1C;
+    color: white;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-parar:hover { background: #991B1B; }
