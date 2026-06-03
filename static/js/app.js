@@ -357,3 +357,23 @@ function cerrarPopup() {
     document.getElementById('btnScan').classList.remove('oculto');
     document.getElementById('zonaScanner').classList.add('oculto');
 }
+
+
+// ── LECTURA EAN DESDE PC (lector inalámbrico o teclado) ───────────
+document
+    .getElementById('inputEan')
+    .addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+
+        const ean = this.value.trim().toUpperCase();
+        this.value = '';  // vaciar siempre para la siguiente lectura
+
+        if (!ean) return;
+
+        if (!modoEscaneoComp) {
+            mostrarMensaje('Primero busca una OF', 'error');
+            return;
+        }
+
+        procesarEscaneo(ean);
+    });
