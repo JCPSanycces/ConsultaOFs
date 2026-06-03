@@ -4,6 +4,7 @@
 from flask import Flask, render_template, request, jsonify
 import pyodbc
 import config
+from datetime import datetime
 
 # Crear la app Flask
 app = Flask(__name__)
@@ -139,6 +140,103 @@ def completar_of():
     except Exception as e:
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
     
+
+# Endpoint para imprimir una etiqueta al finalizar el escaneo de todos los componentes de la OF
+@app.route('/imprimir', methods=['POST'])
+def imprimir_etiqueta():
+    """Envía etiqueta ZPL a las dos impresoras por TCP."""
+    import socket
+
+    num_of   = request.json.get('num_of', '').strip().upper()
+    if not num_of:
+        return jsonify({'error': 'Numero de OF no proporcionado'}), 400
+    
+    ahora     = datetime.now()
+    mascara   = ahora.strftime('%S%M%H%y%m%d')  # ssmmHHYYMMDD
+
+    # ── Etiqueta ZPL ──────────────────────────────────────────────────
+    # Ajusta ^LL (altura etiqueta) y ^PW (ancho) segun el tamaño
+    # de tus etiquetas. Los valores son en dots a 203dpi.
+    # ^LL203 = etiqueta de 1 pulgada de alto (25mm)
+    # ^PW609 = etiqueta de 3 pulgadas de ancho (76mm)
+    zpl = (
+        "^XA"
+        "^CI28"
+        "^PW812"
+        "^LL482"
+        "^MMT"
+        "^MNM"
+
+        # ── Numero de OF centrado ────────────────────────────
+        "^FO0,20"
+        "^FB812,1,0,C,0"                   # FB = field block, ancho 812, centrado
+        "^A0N,35,35"
+        "^FDOrden de Fabricacion:^FS"
+
+        "^FO0,60"
+        "^FB812,1,0,C,0"
+        "^A0N,50,50"
+        f"^FD{num_of}^FS"
+
+        # ── Linea separadora superior ────────────────────────
+        "^FO30,122"
+        "^GB752,2,2^FS"
+
+        # ── Centro izquierda: Control de calidad ─────────────
+        "^FO30,140"
+        "^A0N,38,38"
+        "^FDControl de calidad.^FS"
+
+        "^FO30,188"
+        "^A0N,38,38"
+        "^FDLectura correcta^FS"
+
+        # ── Centro derecha: fecha enmascarada ─────────────────
+        # ^FB con alineacion derecha (R) para justificar a la derecha
+        "^FO0,140"
+        "^FB782,1,0,R,0"
+        "^A0N,30,30"
+        f"^FD{mascara}^FS"
+
+        # ── Linea separadora inferior ────────────────────────
+        "^FO30,242"
+        "^GB752,2,2^FS"
+
+        # ── Codigo de barras centrado y mas grande ────────────
+        "^FO156,258"
+        "^BY3,3,100"
+        "^BCN,100,Y,N,N"
+        f"^FD{num_of}^FS"
+
+        "^XZ"
+    )
+
+    zpl_bytes = zpl.encode('utf-8')
+
+    impresoras = [
+        {'nombre': 'Zebra ZT230',  'ip': '192.168.1.81', 'puerto': 9100},
+        # {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
+    ]
+
+    errores = []
+
+    for imp in impresoras:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((imp['ip'], imp['puerto']))
+            sock.sendall(zpl_bytes)
+            sock.close()
+        except Exception as e:
+            errores.append(f"{imp['nombre']} ({imp['ip']}): {str(e)}")
+
+    if errores:
+        return jsonify({
+            'ok':     False,
+            'avisos': errores
+        }), 207  # 207 = exito parcial
+
+    return jsonify({'ok': True})
 
 
 # Arrancar la app

@@ -273,6 +273,9 @@ function procesarEscaneo(codigo) {
     // Actualizar ZNUMLECAPP en base de datos
     completarOf(numOfActual);
 
+    // Imprimir etiqueta por impresora
+    imprimirEtiqueta(numOfActual);
+
     setTimeout(function () {
         mostrarPopupCompleto();
     }, 400);
@@ -306,6 +309,33 @@ async function completarOf(numOf) {
         }
     } catch (e) {
         console.error('Error de conexion al completar OF:', e);
+    }
+}
+
+
+// ── IMPRESION DE ETIQUETA ─────────────────────────────
+async function imprimirEtiqueta(numOf) {
+    try {
+        const resp = await fetch('/imprimir', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ num_of: numOf })
+        });
+        const json = await resp.json();
+
+        if (!resp.ok) {
+            console.error('Error al imprimir:', json.error);
+        } else if (json.avisos && json.avisos.length > 0) {
+            // Hubo errores en alguna impresora pero no en todas
+            console.warn('Avisos de impresion:', json.avisos);
+            json.avisos.forEach(function(aviso) {
+                console.warn(aviso);
+            });
+        } else {
+            console.log('Etiqueta enviada correctamente a las dos impresoras');
+        }
+    } catch (e) {
+        console.error('Error de conexion al imprimir:', e);
     }
 }
 
