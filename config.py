@@ -1,3 +1,5 @@
+# *********VERSIÓN 2.0 - 03/06/2026*********
+
 # config.py - Datos de conexion a SQL Server
 SQL_SERVER = '172.17.0.10' # IP del servidor SQL Server 
 SQL_INSTANCE = 'SAGEX3' # Nombre de la instancia 
