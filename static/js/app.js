@@ -8,6 +8,7 @@
 let eansPendientes = [];   // lista de EANs de componentes de la OF
 let eansLeidos     = {};   // { ean: true/false }
 let modoEscaneoComp = false;
+let datosPendientes = null;  // guarda los datos mientras se muestra el popup de aviso
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -101,14 +102,25 @@ async function buscarOF() {
             return;
         }
 
-        mostrarResultados(json.datos);
-        divMsg.classList.add('oculto');
+        // Comprobar si la OF ya fue leida anteriormente
+        const numlec = json.datos[0].NUMLEC_OF_0 || 0;
+
+        if (numlec > 0) {
+            // Guardar datos y mostrar popup de aviso
+            datosPendientes = json.datos;
+            mostrarPopupYaLeida(numlec);
+        } else {
+            // OF nueva, continuar directamente
+            mostrarResultados(json.datos);
+            divMsg.classList.add('oculto');
+        }
 
     } catch (e) {
         mostrarMensaje(
-            'No se pudo conectar con el servidor. Comprueba que la aplicación está arrancada.',
+            'Error: ' + e.message,
             'error'
         );
+
     } finally {
         btnBuscar.disabled    = false;
         btnBuscar.textContent = 'Buscar';
@@ -405,3 +417,48 @@ document
 
         procesarEscaneo(ean);
     });
+
+
+
+// ── POPUP OF YA LEIDA ─────────────────────────────────
+function mostrarPopupYaLeida(veces) {
+    const msg = veces === 1
+        ? 'Esta OF ya fue leída 1 vez anteriormente. ¿Desea continuar?'
+        : 'Esta OF ya fue leída ' + veces + ' veces anteriormente. ¿Desea continuar?';
+
+    document.getElementById('popupYaLeidaMensaje').textContent = msg;
+
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+}
+
+function popupYaLeidaSi() {
+    // Cerrar popup y continuar con los datos guardados
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    if (datosPendientes) {
+        mostrarResultados(datosPendientes);
+        document.getElementById('mensaje').classList.add('oculto');
+        datosPendientes = null;
+    }
+}
+
+function popupYaLeidaNo() {
+    // Cerrar popup y resetear pantalla inicial
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    datosPendientes     = null;
+    eansPendientes      = [];
+    eansLeidos          = {};
+    modoEscaneoComp     = false;
+
+    document.getElementById('resultados').classList.add('oculto');
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('inputOF').value = '';
+    document.getElementById('inputOF').focus();
+}

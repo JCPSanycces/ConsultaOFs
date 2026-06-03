@@ -598,3 +598,37 @@ body {
         display: block;
     }
 }
+
+
+
+/* =====================================================
+   POPUP OF YA LEIDA
+===================================================== */
+
+.popup-icono-aviso {
+    color: #b45309;
+}
+
+.popup-botones {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-popup-no {
+    background: #64748b;
+    padding: 13px 28px;
+}
+
+.btn-popup-no:hover {
+    background: #475569;
+}
+
+.btn-popup-si {
+    background: #1d4ed8;
+    padding: 13px 28px;
+}
+
+.btn-popup-si:hover {
+    background: #1e40af;
+}

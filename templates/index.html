@@ -175,6 +175,19 @@
             </div>
         </div>
 
+        <!-- POPUP OF YA LEIDA -->
+        <div id="popupYaLeida" class="popup-overlay oculto" style="display:none">
+            <div class="popup-caja">
+                <div class="popup-icono popup-icono-aviso">⚠</div>
+                <h2>OF ya leída anteriormente</h2>
+                <p id="popupYaLeidaMensaje">Esta OF ya ha sido leída anteriormente. ¿Desea continuar?</p>
+                <div class="popup-botones">
+                    <button onclick="popupYaLeidaNo()" class="btn-popup btn-popup-no">No</button>
+                    <button onclick="popupYaLeidaSi()" class="btn-popup btn-popup-si">Sí, continuar</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="/static/js/app.js"></script>
