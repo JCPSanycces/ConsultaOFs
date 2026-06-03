@@ -36,7 +36,6 @@
                     autocomplete="off"
                     autocapitalize="characters"
                 >
-
                 <button id="btnBuscar" onclick="buscarOF()">
                     Buscar
                 </button>
@@ -47,7 +46,7 @@
                 Escanear con camara
             </button>
 
-            <!-- VENTANA DEL ESCANER (oculta hasta que se pulsa el boton) -->
+            <!-- VENTANA DEL ESCANER -->
             <div id="zonaScanner" class="zona-scanner oculto">
                 <div id="visorCamara"></div>
                 <p class="ayuda-scan">Apunta al código de barras o QR</p>
@@ -61,7 +60,7 @@
 
         </div>
 
-        <!-- ÁREA DE MENSAJES -->
+        <!-- ÁREA DE MENSAJES GENERALES -->
         <div id="mensaje" class="mensaje oculto"></div>
 
         <!-- PANEL DE RESULTADOS -->
@@ -113,7 +112,6 @@
                         <span id="rQtyLanzada" class="valor cod"></span>
                     </div>
 
-
                 </div>
 
             </div>
@@ -124,7 +122,11 @@
                 <h2 class="seccion-titulo">
                     Componentes
                     <span id="totalComp" class="badge"></span>
+                    <span id="contadorOk" class="badge badge-verde">0 / 0</span>
                 </h2>
+
+                <!-- MENSAJE DE COMPONENTE NO ENCONTRADO -->
+                <div id="mensajeComp" class="mensaje oculto"></div>
 
                 <div class="tabla-scroll">
 
@@ -132,15 +134,15 @@
 
                         <thead>
                             <tr>
+                                <th>Estado</th>
                                 <th>Componente</th>
                                 <th>Descripción</th>
-                                <th>Estado línea</th>
+                                <th>EAN</th>
                                 <th>Cantidad</th>
                             </tr>
                         </thead>
 
                         <tbody id="cuerpoTabla">
-                            <!-- Se rellena dinámicamente desde JavaScript -->
                         </tbody>
 
                     </table>
@@ -152,10 +154,19 @@
         </div>
         <!-- Fin resultados -->
 
+        <!-- POPUP DE OF COMPLETADA -->
+        <div id="popupCompleto" class="popup-overlay oculto">
+            <div class="popup-caja">
+                <div class="popup-icono">✓</div>
+                <h2>¡OF Completada!</h2>
+                <p>Todos los componentes han sido escaneados correctamente.</p>
+                <button onclick="cerrarPopup()" class="btn-popup">Aceptar</button>
+            </div>
+        </div>
+
     </main>
 
     <script src="/static/js/app.js"></script>
-
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 </body>
