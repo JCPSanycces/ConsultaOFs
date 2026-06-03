@@ -103,6 +103,44 @@ def buscar_of():
         }), 500
 
 
+# Endpoint para actualizar el número de veces que se ha leído correctamente una OF
+@app.route('/completar', methods=['POST'])
+def completar_of():
+    """Incrementa en 1 el campo ZNUMLECAPP de la OF completada."""
+    num_of = request.json.get('num_of', '').strip().upper()
+
+    if not num_of:
+        return jsonify({'error': 'Numero de OF no proporcionado'}), 400
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE x3prd.SANYCCES.MFGITM
+            SET    ZNUMLECAPP_0 = ISNULL(ZNUMLECAPP_0, 0) + 1
+            WHERE  MFGNUM_0 = ?
+        """, num_of)
+
+        if cursor.rowcount == 0:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'OF no encontrada en la tabla de artículos lanzados'}), 404
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'ok': True, 'num_of': num_of})
+
+    except pyodbc.Error as e:
+        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+    
+
+
 # Arrancar la app
 if __name__ == '__main__':
     print('Arrancando app OF Sage X3...')

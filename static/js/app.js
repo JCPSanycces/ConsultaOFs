@@ -65,7 +65,9 @@ function reproducirSonido(tipo) {
 // ── BÚSQUEDA DE OF ────────────────────────────────────
 async function buscarOF() {
 
-    const numOf     = document.getElementById('inputOF').value.trim().toUpperCase();
+    const inputOF   = document.getElementById('inputOF');
+    const numOf     = inputOF.value.trim().toUpperCase();
+    inputOF.value   = numOf;
     const btnBuscar = document.getElementById('btnBuscar');
     const divMsg    = document.getElementById('mensaje');
     const divRes    = document.getElementById('resultados');
@@ -253,6 +255,12 @@ function procesarEscaneo(codigo) {
 
     if (todosLeidos) {
     reproducirSonido('completo');
+    // Guardar el numero de OF antes de que cerrarPopup lo limpie
+    const numOfActual = document.getElementById('rNumOf').textContent.trim();
+
+    // Actualizar ZNUMLECAPP en base de datos
+    completarOf(numOfActual);
+
     setTimeout(function () {
         mostrarPopupCompleto();
     }, 400);
@@ -267,6 +275,26 @@ function actualizarContador() {
     }).length;
     const total  = eansPendientes.length;
     document.getElementById('contadorOk').textContent = leidos + ' / ' + total;
+}
+
+
+// ── COMPLETAR OF EN BASE DE DATOS ─────────────────────
+async function completarOf(numOf) {
+    try {
+        const resp = await fetch('/completar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ num_of: numOf })
+        });
+        const json = await resp.json();
+        if (!resp.ok) {
+            console.error('Error al actualizar el número de lecturas:', json.error);
+        } else {
+            console.log('Número de lecturas actualizado para OF:', json.num_of);
+        }
+    } catch (e) {
+        console.error('Error de conexion al completar OF:', e);
+    }
 }
 
 
