@@ -171,18 +171,22 @@ body {
 
 .grid-datos {
     display: grid;
-    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 14px;
+}
+
+.dato.doble {
+    grid-column: span 2;
+}
+
+.dato.placeholder {
+    display: none;
 }
 
 .dato {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.dato.placeholder {
-    visibility: hidden;
 }
 
 .etiqueta {
@@ -288,21 +292,118 @@ body {
 
 
 /* =====================================================
-   RESPONSIVE - MÓVILES
+   RESPONSIVE
 ===================================================== */
 
-@media (max-width: 600px) {
+/* Móvil pequeño (hasta 480px) */
+@media (max-width: 480px) {
 
-    .input-grupo {
-        flex-direction: column;
+    .grid-datos {
+        grid-template-columns: 1fr;
     }
 
     .dato.doble {
         grid-column: span 1;
     }
 
+    .input-grupo {
+        flex-direction: column;
+    }
+
+    .tarjeta {
+        padding: 14px;
+    }
+
+    .cabecera h1 {
+        font-size: 16px;
+    }
+
+    .valor {
+        font-size: 14px;
+    }
+
+    .tabla-comp th,
+    .tabla-comp td {
+        padding: 8px 8px;
+        font-size: 12px;
+    }
+
+    .td-cant {
+        font-size: 14px;
+    }
+
+    .popup-caja {
+        padding: 28px 20px;
+        max-width: 90%;
+    }
+
+    .popup-icono {
+        font-size: 48px;
+    }
+
+    .popup-caja h2 {
+        font-size: 18px;
+    }
+
+    .seccion-titulo {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+}
+
+/* Móvil normal (480px a 600px) */
+@media (min-width: 481px) and (max-width: 600px) {
+
+    .grid-datos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dato.doble {
+        grid-column: span 2;
+    }
+
+    .input-grupo {
+        flex-direction: column;
+    }
+
     .tarjeta {
         padding: 16px;
+    }
+
+    .popup-caja {
+        max-width: 85%;
+    }
+
+    .seccion-titulo {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+}
+
+/* Tablet (600px a 900px) */
+@media (min-width: 601px) and (max-width: 900px) {
+
+    .grid-datos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dato.doble {
+        grid-column: span 2;
+    }
+
+}
+
+/* PC (más de 900px) */
+@media (min-width: 901px) {
+
+    .grid-datos {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .dato.doble {
+        grid-column: span 2;
     }
 
 }
