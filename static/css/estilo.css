@@ -399,7 +399,7 @@ body {
 @media (min-width: 901px) {
 
     .grid-datos {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .dato.doble {
@@ -530,4 +530,36 @@ body {
    incluso si tiene display:flex por otra regla */
 .oculto {
     display: none !important;
+}
+
+
+/* =====================================================
+   ESTADO DE FILAS DE COMPONENTES
+===================================================== */
+
+.estado-icono {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.estado-icono.pendiente {
+    color: #94a3b8;
+}
+
+.estado-icono.ok {
+    color: #15803d;
+}
+
+.fila-ok td {
+    background: #dcfce7 !important;
+    color: #14532d !important;
+    transition: background 0.4s ease;
+}
+
+.fila-ok .td-cod {
+    color: #15803d !important;
+}
+
+.fila-ok .td-cant {
+    color: #14532d !important;
 }
