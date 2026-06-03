@@ -76,7 +76,7 @@ def buscar_of():
 
         if not filas:
             return jsonify({
-                "error": "OF no encontrada o no está en estado En Curso"
+                "error": "OF no encontrada, no está en estado En Curso o no tiene componentes imprimibles"
             }), 404
 
         # Convertir fechas a texto para que JSON las entienda

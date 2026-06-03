@@ -135,7 +135,11 @@ function mostrarResultados(datos) {
     document.getElementById('rArticulo').textContent     = d.CODART_OF_0     || '-';
     document.getElementById('rDescArticulo').textContent = d.DESART_OF_0     || '-';
     document.getElementById('rEan').textContent          = d.EANART_OF_0     || '-';
-    document.getElementById('rQtyLanzada').textContent   = d.QTY_LANZADA_0   || '-';
+
+    const qtyLanzada = parseFloat(d.QTY_LANZADA_0);
+    document.getElementById('rQtyLanzada').textContent = Number.isFinite(qtyLanzada)
+        ? qtyLanzada.toFixed(4)
+        : (d.QTY_LANZADA_0 || '-');
 
     const tbody = document.getElementById('cuerpoTabla');
     tbody.innerHTML = '';
@@ -248,11 +252,11 @@ function procesarEscaneo(codigo) {
     });
 
     if (todosLeidos) {
-        reproducirSonido('completo');
-        setTimeout(function () {
-            document.getElementById('popupCompleto').classList.remove('oculto');
-        }, 400);
-    }
+    reproducirSonido('completo');
+    setTimeout(function () {
+        mostrarPopupCompleto();
+    }, 400);
+}
 }
 
 
@@ -309,4 +313,47 @@ function pararCamara() {
     }
     document.getElementById('zonaScanner').classList.add('oculto');
     document.getElementById('btnScan').classList.remove('oculto');
+}
+
+
+// ── POPUP OF COMPLETADA ───────────────────────────────
+function mostrarPopupCompleto() {
+    const popup = document.getElementById('popupCompleto');
+    popup.classList.remove('oculto');
+    // Asegurarse de que el popup está por encima de todo
+    popup.style.display = 'flex';
+}
+
+function cerrarPopup() {
+    // Ocultar popup
+    const popup = document.getElementById('popupCompleto');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    // Parar cámara si estuviera activa
+    if (scanner) {
+        scanner.stop().catch(function () {});
+        scanner = null;
+    }
+
+    // Resetear todo el estado
+    eansPendientes  = [];
+    eansLeidos      = {};
+    modoEscaneoComp = false;
+
+    // Limpiar resultados de la pantalla
+    document.getElementById('resultados').classList.add('oculto');
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('cuerpoTabla').innerHTML = '';
+    document.getElementById('contadorOk').textContent = '0 / 0';
+    document.getElementById('totalComp').textContent  = '';
+    document.getElementById('mensajeComp').classList.add('oculto');
+
+    // Limpiar campo OF y devolver el foco
+    document.getElementById('inputOF').value = '';
+    document.getElementById('inputOF').focus();
+
+    // Mostrar botón de cámara por si estaba oculto
+    document.getElementById('btnScan').classList.remove('oculto');
+    document.getElementById('zonaScanner').classList.add('oculto');
 }
