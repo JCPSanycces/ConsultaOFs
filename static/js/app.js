@@ -18,6 +18,50 @@ document
     });
 
 
+// ── SONIDO DE LECTURA ─────────────────────────────────
+function reproducirSonido(tipo) {
+    const ctx        = new (window.AudioContext || window.webkitAudioContext)();
+    const oscilador  = ctx.createOscillator();
+    const ganancia   = ctx.createGain();
+
+    oscilador.connect(ganancia);
+    ganancia.connect(ctx.destination);
+
+    if (tipo === 'ok') {
+        // Pitido corto y agudo: lectura correcta
+        oscilador.frequency.setValueAtTime(880, ctx.currentTime);
+        oscilador.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
+        ganancia.gain.setValueAtTime(0.4, ctx.currentTime);
+        ganancia.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        oscilador.start(ctx.currentTime);
+        oscilador.stop(ctx.currentTime + 0.25);
+
+    } else if (tipo === 'error') {
+        // Pitido largo y grave: componente no encontrado
+        oscilador.frequency.setValueAtTime(220, ctx.currentTime);
+        ganancia.gain.setValueAtTime(0.5, ctx.currentTime);
+        ganancia.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        oscilador.start(ctx.currentTime);
+        oscilador.stop(ctx.currentTime + 0.5);
+
+    } else if (tipo === 'completo') {
+        // Melodia corta: OF completada
+        const notas = [660, 880, 1100];
+        notas.forEach(function (freq, i) {
+            const osc = ctx.createOscillator();
+            const gan = ctx.createGain();
+            osc.connect(gan);
+            gan.connect(ctx.destination);
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+            gan.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
+            gan.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.2);
+            osc.start(ctx.currentTime + i * 0.15);
+            osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+        });
+    }
+}
+
+
 // ── BÚSQUEDA DE OF ────────────────────────────────────
 async function buscarOF() {
 
@@ -158,6 +202,7 @@ function procesarEscaneo(codigo) {
 
     // Comprobar si el EAN pertenece a esta OF
     if (!(codigo in eansLeidos)) {
+        reproducirSonido('error');
         divMensajeComp.textContent = '⚠ EAN ' + codigo + ' no pertenece a esta OF';
         divMensajeComp.className   = 'mensaje error';
         divMensajeComp.classList.remove('oculto');
@@ -169,6 +214,7 @@ function procesarEscaneo(codigo) {
 
     // Comprobar si ya estaba leído
     if (eansLeidos[codigo]) {
+        reproducirSonido('ok');
         divMensajeComp.textContent = '✓ Este componente ya fue escaneado';
         divMensajeComp.className   = 'mensaje cargando';
         divMensajeComp.classList.remove('oculto');
@@ -180,6 +226,7 @@ function procesarEscaneo(codigo) {
 
     // Marcar como leído
     eansLeidos[codigo] = true;
+    reproducirSonido('ok');
 
     // Buscar la fila por EAN (cuarta columna, índice 3)
     const filas = document.querySelectorAll('#cuerpoTabla tr');
@@ -201,6 +248,7 @@ function procesarEscaneo(codigo) {
     });
 
     if (todosLeidos) {
+        reproducirSonido('completo');
         setTimeout(function () {
             document.getElementById('popupCompleto').classList.remove('oculto');
         }, 400);
