@@ -570,7 +570,7 @@ body {
 ===================================================== */
 
 .input-ean-grupo {
-    display: none;  /* oculto por defecto (movil y tablet) */
+    display: block;  /* visible por defecto en todas las pantallas */
     margin-bottom: 16px;
 }
 
@@ -592,12 +592,9 @@ body {
     background: white;
 }
 
-/* Solo visible en pantallas grandes */
-@media (min-width: 901px) {
-    .input-ean-grupo {
-        display: block;
-    }
-}
+/* Nota: anteriormente estaba oculto en móviles y solo visible en >901px.
+   Ahora está visible siempre para permitir introducir/escanea EAN
+   desde terminales móviles. */
 
 
 
