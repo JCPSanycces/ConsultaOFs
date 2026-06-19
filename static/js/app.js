@@ -340,15 +340,6 @@ async function imprimirEtiqueta(numOf) {
 }
 
 
-// ── POPUP ─────────────────────────────────────────────
-function cerrarPopup() {
-    document.getElementById('popupCompleto').classList.add('oculto');
-    modoEscaneoComp = false;
-    document.getElementById('inputOF').value = '';
-    document.getElementById('inputOF').focus();
-}
-
-
 // ── ESCÁNER DE CÁMARA ─────────────────────────────────
 let scanner = null;
 
@@ -400,10 +391,15 @@ function cerrarPopup() {
     popup.classList.add('oculto');
     popup.style.display = 'none';
 
-    // Parar cámara si estuviera activa
+    // Parar ambas cámaras si estuvieran activas
     if (scanner) {
         scanner.stop().catch(function () {});
         scanner = null;
+    }
+
+    if (scannerComp) {
+        scannerComp.stop().catch(function () {});
+        scannerComp = null;
     }
 
     // Resetear todo el estado
@@ -491,4 +487,61 @@ function popupYaLeidaNo() {
     document.getElementById('mensaje').classList.add('oculto');
     document.getElementById('inputOF').value = '';
     document.getElementById('inputOF').focus();
+}
+
+// ── ESCÁNER DE CÁMARA PARA COMPONENTES ───────────────
+let scannerComp     = null;
+let bloqueandoScan  = false;
+
+function activarCamaraComp() {
+
+    if (!modoEscaneoComp) {
+        mostrarMensaje('Primero busca una OF', 'error');
+        return;
+    }
+
+    document.getElementById('zonaScannerComp').classList.remove('oculto');
+    document.getElementById('btnScanComp').classList.add('oculto');
+
+    scannerComp = new Html5Qrcode('visorCamaraComp');
+
+    scannerComp.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        function (codigoLeido) {
+
+            // Evitar lecturas duplicadas del mismo codigo
+            if (bloqueandoScan) return;
+            bloqueandoScan = true;
+            setTimeout(function () { bloqueandoScan = false; }, 1500);
+
+            procesarEscaneo(codigoLeido);
+
+            // Comprobar si ya terminamos para cerrar la camara
+            const todosLeidos = eansPendientes.every(function (ean) {
+                return eansLeidos[ean];
+            });
+            if (todosLeidos) {
+                pararCamaraComp();
+            }
+        },
+        function (error) { }
+    ).catch(function (err) {
+        mostrarMensaje('No se pudo acceder a la cámara: ' + err, 'error');
+        pararCamaraComp();
+    });
+}
+
+function pararCamaraComp() {
+    if (scannerComp) {
+        scannerComp.stop().then(function () {
+            scannerComp.clear();
+            scannerComp = null;
+        }).catch(function () {
+            scannerComp = null;
+        });
+    }
+    document.getElementById('zonaScannerComp').classList.add('oculto');
+    document.getElementById('btnScanComp').classList.remove('oculto');
+    bloqueandoScan = false;
 }

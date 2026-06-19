@@ -134,6 +134,18 @@
                     >
                 </div>
 
+                <!-- BOTÓN DE CÁMARA PARA COMPONENTES (visible en móvil y tablet) -->
+                <button id="btnScanComp" onclick="activarCamaraComp()" class="btn-camara btn-camara-comp">
+                    Escanear componentes con cámara
+                </button>
+
+                <!-- VISOR DE CÁMARA PARA COMPONENTES -->
+                <div id="zonaScannerComp" class="zona-scanner oculto">
+                    <div id="visorCamaraComp"></div>
+                    <p class="ayuda-scan">Apunta al código EAN del componente</p>
+                    <button onclick="pararCamaraComp()" class="btn-parar">Cancelar</button>
+                </div>
+
                 <!-- MENSAJE DE COMPONENTE NO ENCONTRADO -->
                 <div id="mensajeComp" class="mensaje oculto"></div>
 

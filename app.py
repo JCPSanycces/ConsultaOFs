@@ -214,8 +214,8 @@ def imprimir_etiqueta():
     zpl_bytes = zpl.encode('utf-8')
 
     impresoras = [
-        {'nombre': 'Zebra ZT230',  'ip': '192.168.1.81', 'puerto': 9100},
-        # {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
+        # {'nombre': 'Zebra ZT230',  'ip': '192.168.1.81', 'puerto': 9100},
+        {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
     ]
 
     errores = []

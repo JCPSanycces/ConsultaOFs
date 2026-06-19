@@ -629,3 +629,25 @@ body {
 .btn-popup-si:hover {
     background: #1e40af;
 }
+
+/* Botón cámara componentes (solo móvil y tablet) */
+.btn-camara-comp {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background: #0F2A5E;
+}
+
+.btn-camara-comp:hover {
+    background: #1e3a8a;
+}
+
+.btn-camara-comp.oculto {
+    display: none;
+}
+
+/* En PC ocultamos el botón de cámara de componentes */
+@media (min-width: 901px) {
+    .btn-camara-comp {
+        display: none;
+    }
+}
