@@ -487,6 +487,11 @@ body {
     animation: popupEntrada 0.3s ease;
 }
 
+.popup-caja-serie {
+    max-width: 420px;
+    text-align: left;
+}
+
 @keyframes popupEntrada {
     from { transform: scale(0.8); opacity: 0; }
     to   { transform: scale(1);   opacity: 1; }
@@ -650,4 +655,9 @@ body {
     .btn-camara-comp {
         display: none;
     }
+}
+
+/* BADGE AMBAR*/
+.badge-ambar {
+    background: #B45309;
 }

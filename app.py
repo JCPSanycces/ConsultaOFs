@@ -85,6 +85,8 @@ def buscar_of():
             for clave, valor in fila.items():
                 if hasattr(valor, "strftime"):
                     fila[clave] = valor.strftime("%d/%m/%Y")
+                elif isinstance(valor, bytes):
+                    fila[clave] = valor.hex()
                 elif valor is None:
                     fila[clave] = ""
 
@@ -140,6 +142,93 @@ def completar_of():
     except Exception as e:
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
     
+# Endpoint para comprobar si una OF tiene numeros de serie
+@app.route('/series', methods=['POST'])
+def comprobar_series():
+    """Comprueba si una OF tiene numeros de serie en YMFGSERIE."""
+    num_of = request.json.get('num_of', '').strip().upper()
+
+    if not num_of:
+        return jsonify({'error': 'Numero de OF no proporcionado'}), 400
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT * FROM x3prd.SANYCCES.YMFGSERIE WHERE MFGNUM_0 = ?',
+            num_of
+        )
+
+        columnas = [col[0] for col in cursor.description]
+        filas    = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+
+        cursor.close()
+        conn.close()
+
+        for fila in filas:
+            for clave, valor in fila.items():
+                if hasattr(valor, "strftime"):
+                    fila[clave] = valor.strftime("%d/%m/%Y")
+                elif isinstance(valor, bytes):
+                    fila[clave] = valor.hex()
+                elif valor is None:
+                    fila[clave] = ""
+
+        return jsonify({
+            'tiene_series': len(filas) > 0,
+            'total':        len(filas),
+            'series':       filas
+        })
+
+    except pyodbc.Error as e:
+        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+
+# Endpoint para validar si un numero de serie existe en YMFGSERIE
+@app.route('/validar-serie', methods=['POST'])
+def validar_serie():
+    """Comprueba si un numero de serie existe en YMFGSERIE."""
+    num_serie = request.json.get('num_serie', '').strip()
+
+    if not num_serie:
+        return jsonify({'error': 'Numero de serie no proporcionado'}), 400
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT * FROM x3prd.SANYCCES.YMFGSERIE WHERE NSERIE_0 = ?',
+            num_serie
+        )
+
+        columnas = [col[0] for col in cursor.description]
+        filas    = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+
+        cursor.close()
+        conn.close()
+
+        for fila in filas:
+            for clave, valor in fila.items():
+                if hasattr(valor, "strftime"):
+                    fila[clave] = valor.strftime("%d/%m/%Y")
+                elif isinstance(valor, bytes):
+                    fila[clave] = valor.hex()
+                elif valor is None:
+                    fila[clave] = ""
+
+        return jsonify({
+            'existe': len(filas) > 0,
+            'serie':  filas[0] if filas else None
+        })
+
+    except pyodbc.Error as e:
+        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+
 
 # Endpoint para imprimir una etiqueta al finalizar el escaneo de todos los componentes de la OF
 @app.route('/imprimir', methods=['POST'])
@@ -214,8 +303,8 @@ def imprimir_etiqueta():
     zpl_bytes = zpl.encode('utf-8')
 
     impresoras = [
-        # {'nombre': 'Zebra ZT230',  'ip': '192.168.1.81', 'puerto': 9100},
-        {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
+        {'nombre': 'Zebra ZT230',  'ip': '192.168.1.981', 'puerto': 9100},
+        # {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
     ]
 
     errores = []

@@ -172,6 +172,38 @@
 
             </div>
 
+            <!-- POPUP NÚMERO DE SERIE -->
+            <div id="popupSerie" class="popup-overlay oculto" style="display:none">
+                <div class="popup-caja popup-caja-serie">
+                    <h2 style="margin-bottom:16px;">Número de serie requerido</h2>
+                    <p id="textoSeries" class="ayuda" style="margin-bottom:16px;">
+                        Esta OF requiere la lectura de un número de serie.
+                    </p>
+
+                    <div id="inputSerieGrupo" class="input-ean-grupo">
+                        <input
+                            type="text"
+                            id="inputSerie"
+                            placeholder="Escanea o introduce el número de serie"
+                            autocomplete="off"
+                            autocapitalize="characters"
+                            style="font-size:18px;"
+                        >
+                    </div>
+
+                    <button id="btnScanSerie" onclick="activarCamaraSerie()" class="btn-camara" style="margin-top:0;">
+                        Escanear con cámara
+                    </button>
+
+                    <div id="zonaScannerSerie" class="zona-scanner oculto">
+                        <div id="visorCamaraSerie"></div>
+                        <p class="ayuda-scan">Apunta al código del número de serie</p>
+                        <button onclick="pararCamaraSerie()" class="btn-parar">Cancelar</button>
+                    </div>
+
+                    <div id="mensajeSerie" class="mensaje oculto" style="margin-top:12px;"></div>
+                </div>
+            </div>
         </div>
         <!-- Fin resultados -->
 

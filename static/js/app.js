@@ -5,10 +5,14 @@
 
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
-let eansPendientes = [];   // lista de EANs de componentes de la OF
-let eansLeidos     = {};   // { ean: true/false }
+let eansPendientes  = [];
+let eansLeidos      = {};
 let modoEscaneoComp = false;
-let datosPendientes = null;  // guarda los datos mientras se muestra el popup de aviso
+let datosPendientes = null;
+let ofTieneSeries   = false;
+let scannerSerie    = null;
+let bloqueandoSerie = false;
+let bloqueandoScan  = false;
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -18,18 +22,40 @@ document
         if (e.key === 'Enter') buscarOF();
     });
 
+document
+    .getElementById('inputEan')
+    .addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        const ean = this.value.trim().toUpperCase();
+        this.value = '';
+        if (!ean) return;
+        if (!modoEscaneoComp) {
+            mostrarMensaje('Primero busca una OF', 'error');
+            return;
+        }
+        procesarEscaneo(ean);
+    });
 
-// ── SONIDO DE LECTURA ─────────────────────────────────
+document
+    .getElementById('inputSerie')
+    .addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        const serie = this.value.trim().toUpperCase();
+        this.value  = '';
+        if (serie) validarSerie(serie);
+    });
+
+
+// ── SONIDO ────────────────────────────────────────────
 function reproducirSonido(tipo) {
-    const ctx        = new (window.AudioContext || window.webkitAudioContext)();
-    const oscilador  = ctx.createOscillator();
-    const ganancia   = ctx.createGain();
+    const ctx       = new (window.AudioContext || window.webkitAudioContext)();
+    const oscilador = ctx.createOscillator();
+    const ganancia  = ctx.createGain();
 
     oscilador.connect(ganancia);
     ganancia.connect(ctx.destination);
 
     if (tipo === 'ok') {
-        // Pitido corto y agudo: lectura correcta
         oscilador.frequency.setValueAtTime(880, ctx.currentTime);
         oscilador.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
         ganancia.gain.setValueAtTime(0.4, ctx.currentTime);
@@ -38,7 +64,6 @@ function reproducirSonido(tipo) {
         oscilador.stop(ctx.currentTime + 0.25);
 
     } else if (tipo === 'error') {
-        // Pitido largo y grave: componente no encontrado
         oscilador.frequency.setValueAtTime(220, ctx.currentTime);
         ganancia.gain.setValueAtTime(0.5, ctx.currentTime);
         ganancia.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
@@ -46,7 +71,6 @@ function reproducirSonido(tipo) {
         oscilador.stop(ctx.currentTime + 0.5);
 
     } else if (tipo === 'completo') {
-        // Melodia corta: OF completada
         const notas = [660, 880, 1100];
         notas.forEach(function (freq, i) {
             const osc = ctx.createOscillator();
@@ -83,7 +107,6 @@ async function buscarOF() {
     mostrarMensaje('Buscando OF ' + numOf + '...', 'cargando');
     divRes.classList.add('oculto');
 
-    // Resetear estado anterior
     eansPendientes  = [];
     eansLeidos      = {};
     modoEscaneoComp = false;
@@ -102,25 +125,18 @@ async function buscarOF() {
             return;
         }
 
-        // Comprobar si la OF ya fue leida anteriormente
         const numlec = json.datos[0].NUMLEC_OF_0 || 0;
 
         if (numlec > 0) {
-            // Guardar datos y mostrar popup de aviso
             datosPendientes = json.datos;
             mostrarPopupYaLeida(numlec);
         } else {
-            // OF nueva, continuar directamente
             mostrarResultados(json.datos);
             divMsg.classList.add('oculto');
         }
 
     } catch (e) {
-        mostrarMensaje(
-            'Error: ' + e.message,
-            'error'
-        );
-
+        mostrarMensaje('Error: ' + e.message, 'error');
     } finally {
         btnBuscar.disabled    = false;
         btnBuscar.textContent = 'Buscar';
@@ -158,32 +174,28 @@ function mostrarResultados(datos) {
     const tbody = document.getElementById('cuerpoTabla');
     tbody.innerHTML = '';
 
-    eansPendientes  = [];
-    eansLeidos      = {};
+    eansPendientes = [];
+    eansLeidos     = {};
 
     datos.forEach(function (fila) {
-
-        // Saltar filas sin componente
         if (!fila.CODCOMP_OF_0) return;
 
         const cod = fila.CODCOMP_OF_0.trim();
         const ean = (fila.EANCOMP_OF_0 || '').trim();
 
-        // Solo registrar como pendiente si tiene EAN
         if (ean) {
             eansPendientes.push(ean);
             eansLeidos[ean] = false;
         }
 
-        const tr = document.createElement('tr');
-        tr.id = 'fila-' + cod;
-
-        tr.innerHTML =
+        const tr      = document.createElement('tr');
+        tr.id         = 'fila-' + cod;
+        tr.innerHTML  =
             '<td class="td-estado"><span class="estado-icono pendiente">○</span></td>' +
-            '<td class="td-cod">'  + cod                           + '</td>' +
-            '<td>'                 + (fila.DESCOMP_OF_0  || '-')   + '</td>' +
+            '<td class="td-cod">'  + cod + '</td>' +
+            '<td>'                 + (fila.DESCOMP_OF_0  || '-') + '</td>' +
             '<td class="td-cod">'  + (ean || '<span style="color:#94a3b8">Sin EAN</span>') + '</td>' +
-            '<td class="td-cant">' + (fila.QTYCOMP_OF_0  || '-')   + '</td>';
+            '<td class="td-cant">' + (fila.QTYCOMP_OF_0  || '-') + '</td>';
 
         tbody.appendChild(tr);
     });
@@ -192,24 +204,19 @@ function mostrarResultados(datos) {
     actualizarContador();
     document.getElementById('resultados').classList.remove('oculto');
 
-    // Activar modo escaneo solo si hay EANs que leer
     if (eansPendientes.length > 0) {
         modoEscaneoComp = true;
     } else {
-        mostrarMensaje(
-            'Esta OF no tiene componentes con código EAN asignado.',
-            'error'
-        );
+        mostrarMensaje('Esta OF no tiene componentes con código EAN asignado.', 'error');
     }
 }
 
 
-// ── LÓGICA DE ESCANEO DE COMPONENTES ─────────────────
+// ── ESCANEO DE COMPONENTES ────────────────────────────
 function procesarEscaneo(codigo) {
 
     codigo = codigo.trim().toUpperCase();
 
-    // Si no hay OF cargada, buscar la OF
     if (!modoEscaneoComp) {
         document.getElementById('inputOF').value = codigo;
         buscarOF();
@@ -218,35 +225,27 @@ function procesarEscaneo(codigo) {
 
     const divMensajeComp = document.getElementById('mensajeComp');
 
-    // Comprobar si el EAN pertenece a esta OF
     if (!(codigo in eansLeidos)) {
         reproducirSonido('error');
         divMensajeComp.textContent = '⚠ EAN ' + codigo + ' no pertenece a esta OF';
         divMensajeComp.className   = 'mensaje error';
         divMensajeComp.classList.remove('oculto');
-        setTimeout(function () {
-            divMensajeComp.classList.add('oculto');
-        }, 3000);
+        setTimeout(function () { divMensajeComp.classList.add('oculto'); }, 3000);
         return;
     }
 
-    // Comprobar si ya estaba leído
     if (eansLeidos[codigo]) {
         reproducirSonido('ok');
         divMensajeComp.textContent = '✓ Este componente ya fue escaneado';
         divMensajeComp.className   = 'mensaje cargando';
         divMensajeComp.classList.remove('oculto');
-        setTimeout(function () {
-            divMensajeComp.classList.add('oculto');
-        }, 2000);
+        setTimeout(function () { divMensajeComp.classList.add('oculto'); }, 2000);
         return;
     }
 
-    // Marcar como leído
     eansLeidos[codigo] = true;
     reproducirSonido('ok');
 
-    // Buscar la fila por EAN (cuarta columna, índice 3)
     const filas = document.querySelectorAll('#cuerpoTabla tr');
     filas.forEach(function (fila) {
         const celdaEan = fila.cells[3];
@@ -260,40 +259,123 @@ function procesarEscaneo(codigo) {
     divMensajeComp.classList.add('oculto');
     actualizarContador();
 
-    // Comprobar si todos los EANs están leídos
     const todosLeidos = eansPendientes.every(function (ean) {
         return eansLeidos[ean];
     });
 
     if (todosLeidos) {
-    reproducirSonido('completo');
-    // Guardar el numero de OF antes de que cerrarPopup lo limpie
-    const numOfActual = document.getElementById('rNumOf').textContent.trim();
+        const numOfActual = document.getElementById('rNumOf').textContent.trim();
 
-    // Actualizar ZNUMLECAPP en base de datos
-    completarOf(numOfActual);
-
-    // Imprimir etiqueta por impresora
-    imprimirEtiqueta(numOfActual);
-
-    setTimeout(function () {
-        mostrarPopupCompleto();
-    }, 400);
+        fetch('/series', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ num_of: numOfActual })
+        })
+        .then(function (resp) { return resp.json(); })
+        .then(function (json) {
+            if (json.tiene_series) {
+                ofTieneSeries = true;
+                mostrarBloqueSeries(json.total);
+            } else {
+                ofTieneSeries = false;
+                finalizarOf(numOfActual);
+            }
+        })
+        .catch(function (e) {
+            console.error('Error al comprobar series:', e);
+            finalizarOf(numOfActual);
+        });
+    }
 }
-}
 
 
-// ── CONTADOR DE PROGRESO ──────────────────────────────
+// ── CONTADOR ──────────────────────────────────────────
 function actualizarContador() {
     const leidos = eansPendientes.filter(function (ean) {
         return eansLeidos[ean];
     }).length;
-    const total  = eansPendientes.length;
-    document.getElementById('contadorOk').textContent = leidos + ' / ' + total;
+    document.getElementById('contadorOk').textContent = leidos + ' / ' + eansPendientes.length;
 }
 
 
-// ── COMPLETAR OF EN BASE DE DATOS ─────────────────────
+// ── NÚMEROS DE SERIE ──────────────────────────────────
+function mostrarBloqueSeries(total) {
+    const popup = document.getElementById('popupSerie');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+
+    document.getElementById('textoSeries').textContent =
+        'Esta OF tiene ' + total + ' número' + (total > 1 ? 's' : '') +
+        ' de serie registrado' + (total > 1 ? 's' : '') +
+        '. Escanea uno para validar la OF.';
+
+    document.getElementById('mensajeSerie').classList.add('oculto');
+    document.getElementById('inputSerie').value = '';
+    document.getElementById('inputSerie').focus();
+}
+
+async function validarSerie(numSerie) {
+
+    numSerie = numSerie.trim().toUpperCase();
+    if (!numSerie) return;
+
+    const divMsg = document.getElementById('mensajeSerie');
+
+    try {
+        const resp = await fetch('/validar-serie', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ num_serie: numSerie })
+        });
+        const json = await resp.json();
+
+        if (!resp.ok) {
+            reproducirSonido('error');
+            divMsg.textContent = '⚠ Error al validar el número de serie';
+            divMsg.className   = 'mensaje error';
+            divMsg.classList.remove('oculto');
+            return;
+        }
+
+        if (json.existe) {
+            pararCamaraSerie();
+
+            const popup = document.getElementById('popupSerie');
+            popup.classList.add('oculto');
+            popup.style.display = 'none';
+
+            const numOf = document.getElementById('rNumOf').textContent.trim();
+            setTimeout(function () { finalizarOf(numOf); }, 400);
+
+        } else {
+            reproducirSonido('error');
+            divMsg.textContent = '⚠ Número de serie ' + numSerie + ' no encontrado. Vuelve a intentarlo.';
+            divMsg.className   = 'mensaje error';
+            divMsg.classList.remove('oculto');
+            document.getElementById('inputSerie').value = '';
+            document.getElementById('inputSerie').focus();
+            setTimeout(function () { divMsg.classList.add('oculto'); }, 3000);
+        }
+
+    } catch (e) {
+        reproducirSonido('error');
+        divMsg.textContent = '⚠ Error de conexión al validar serie';
+        divMsg.className   = 'mensaje error';
+        divMsg.classList.remove('oculto');
+    }
+}
+
+
+// ── FINALIZAR OF ──────────────────────────────────────
+async function finalizarOf(numOf) {
+    reproducirSonido('completo');
+    await completarOf(numOf);
+    await imprimirEtiqueta(numOf);
+    setTimeout(function () { mostrarPopupCompleto(); }, 400);
+}
+
+
+// ── ACTUALIZAR BBDD AL COMPLETAR ──────────────────────
 async function completarOf(numOf) {
     try {
         const resp = await fetch('/completar', {
@@ -302,18 +384,15 @@ async function completarOf(numOf) {
             body:    JSON.stringify({ num_of: numOf })
         });
         const json = await resp.json();
-        if (!resp.ok) {
-            console.error('Error al actualizar el número de lecturas:', json.error);
-        } else {
-            console.log('Número de lecturas actualizado para OF:', json.num_of);
-        }
+        if (!resp.ok) console.error('Error al actualizar lecturas:', json.error);
+        else console.log('Lecturas actualizadas para OF:', json.num_of);
     } catch (e) {
         console.error('Error de conexion al completar OF:', e);
     }
 }
 
 
-// ── IMPRESION DE ETIQUETA ─────────────────────────────
+// ── IMPRESIÓN ─────────────────────────────────────────
 async function imprimirEtiqueta(numOf) {
     try {
         const resp = await fetch('/imprimir', {
@@ -322,25 +401,104 @@ async function imprimirEtiqueta(numOf) {
             body:    JSON.stringify({ num_of: numOf })
         });
         const json = await resp.json();
-
-        if (!resp.ok) {
-            console.error('Error al imprimir:', json.error);
-        } else if (json.avisos && json.avisos.length > 0) {
-            // Hubo errores en alguna impresora pero no en todas
-            console.warn('Avisos de impresion:', json.avisos);
-            json.avisos.forEach(function(aviso) {
-                console.warn(aviso);
-            });
-        } else {
-            console.log('Etiqueta enviada correctamente a las dos impresoras');
-        }
+        if (!resp.ok) console.error('Error al imprimir:', json.error);
+        else console.log('Etiqueta enviada correctamente');
     } catch (e) {
         console.error('Error de conexion al imprimir:', e);
     }
 }
 
 
-// ── ESCÁNER DE CÁMARA ─────────────────────────────────
+// ── POPUP OF COMPLETADA ───────────────────────────────
+function mostrarPopupCompleto() {
+    const popup = document.getElementById('popupCompleto');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+}
+
+function cerrarPopup() {
+    const popup = document.getElementById('popupCompleto');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    if (scanner) {
+        scanner.stop().catch(function () {});
+        scanner = null;
+    }
+    if (scannerComp) {
+        scannerComp.stop().catch(function () {});
+        scannerComp = null;
+    }
+    pararCamaraSerie();
+
+    eansPendientes  = [];
+    eansLeidos      = {};
+    modoEscaneoComp = false;
+    ofTieneSeries   = false;
+
+    document.getElementById('resultados').classList.add('oculto');
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('cuerpoTabla').innerHTML = '';
+    document.getElementById('contadorOk').textContent = '0 / 0';
+    document.getElementById('totalComp').textContent  = '';
+    document.getElementById('mensajeComp').classList.add('oculto');
+
+    const popupSerie = document.getElementById('popupSerie');
+    popupSerie.classList.add('oculto');
+    popupSerie.style.display = 'none';
+    document.getElementById('inputSerie').value = '';
+    document.getElementById('mensajeSerie').classList.add('oculto');
+
+    document.getElementById('inputOF').value = '';
+    document.getElementById('btnScan').classList.remove('oculto');
+    document.getElementById('zonaScanner').classList.add('oculto');
+    document.getElementById('inputOF').focus();
+}
+
+
+// ── POPUP OF YA LEIDA ─────────────────────────────────
+function mostrarPopupYaLeida(veces) {
+    const msg = veces === 1
+        ? 'Esta OF ya fue leída 1 vez anteriormente. ¿Desea continuar?'
+        : 'Esta OF ya fue leída ' + veces + ' veces anteriormente. ¿Desea continuar?';
+
+    document.getElementById('popupYaLeidaMensaje').textContent = msg;
+
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+}
+
+function popupYaLeidaSi() {
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    if (datosPendientes) {
+        mostrarResultados(datosPendientes);
+        document.getElementById('mensaje').classList.add('oculto');
+        datosPendientes = null;
+    }
+}
+
+function popupYaLeidaNo() {
+    const popup = document.getElementById('popupYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    datosPendientes = null;
+    eansPendientes  = [];
+    eansLeidos      = {};
+    modoEscaneoComp = false;
+
+    document.getElementById('resultados').classList.add('oculto');
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('inputOF').value = '';
+    document.getElementById('inputOF').focus();
+}
+
+
+// ── CÁMARA OF (búsqueda inicial) ──────────────────────
 let scanner = null;
 
 function activarCamara() {
@@ -368,133 +526,17 @@ function pararCamara() {
         scanner.stop().then(function () {
             scanner.clear();
             scanner = null;
-        }).catch(function () {
-            scanner = null;
-        });
+        }).catch(function () { scanner = null; });
     }
     document.getElementById('zonaScanner').classList.add('oculto');
     document.getElementById('btnScan').classList.remove('oculto');
 }
 
 
-// ── POPUP OF COMPLETADA ───────────────────────────────
-function mostrarPopupCompleto() {
-    const popup = document.getElementById('popupCompleto');
-    popup.classList.remove('oculto');
-    // Asegurarse de que el popup está por encima de todo
-    popup.style.display = 'flex';
-}
-
-function cerrarPopup() {
-    // Ocultar popup
-    const popup = document.getElementById('popupCompleto');
-    popup.classList.add('oculto');
-    popup.style.display = 'none';
-
-    // Parar ambas cámaras si estuvieran activas
-    if (scanner) {
-        scanner.stop().catch(function () {});
-        scanner = null;
-    }
-
-    if (scannerComp) {
-        scannerComp.stop().catch(function () {});
-        scannerComp = null;
-    }
-
-    // Resetear todo el estado
-    eansPendientes  = [];
-    eansLeidos      = {};
-    modoEscaneoComp = false;
-
-    // Limpiar resultados de la pantalla
-    document.getElementById('resultados').classList.add('oculto');
-    document.getElementById('mensaje').classList.add('oculto');
-    document.getElementById('cuerpoTabla').innerHTML = '';
-    document.getElementById('contadorOk').textContent = '0 / 0';
-    document.getElementById('totalComp').textContent  = '';
-    document.getElementById('mensajeComp').classList.add('oculto');
-
-    // Limpiar campo OF y devolver el foco
-    document.getElementById('inputOF').value = '';
-    document.getElementById('inputOF').focus();
-
-    // Mostrar botón de cámara por si estaba oculto
-    document.getElementById('btnScan').classList.remove('oculto');
-    document.getElementById('zonaScanner').classList.add('oculto');
-}
-
-
-// ── LECTURA EAN DESDE PC (lector inalámbrico o teclado) ───────────
-document
-    .getElementById('inputEan')
-    .addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
-
-        const ean = this.value.trim().toUpperCase();
-        this.value = '';  // vaciar siempre para la siguiente lectura
-
-        if (!ean) return;
-
-        if (!modoEscaneoComp) {
-            mostrarMensaje('Primero busca una OF', 'error');
-            return;
-        }
-
-        procesarEscaneo(ean);
-    });
-
-
-
-// ── POPUP OF YA LEIDA ─────────────────────────────────
-function mostrarPopupYaLeida(veces) {
-    const msg = veces === 1
-        ? 'Esta OF ya fue leída 1 vez anteriormente. ¿Desea continuar?'
-        : 'Esta OF ya fue leída ' + veces + ' veces anteriormente. ¿Desea continuar?';
-
-    document.getElementById('popupYaLeidaMensaje').textContent = msg;
-
-    const popup = document.getElementById('popupYaLeida');
-    popup.classList.remove('oculto');
-    popup.style.display = 'flex';
-}
-
-function popupYaLeidaSi() {
-    // Cerrar popup y continuar con los datos guardados
-    const popup = document.getElementById('popupYaLeida');
-    popup.classList.add('oculto');
-    popup.style.display = 'none';
-
-    if (datosPendientes) {
-        mostrarResultados(datosPendientes);
-        document.getElementById('mensaje').classList.add('oculto');
-        datosPendientes = null;
-    }
-}
-
-function popupYaLeidaNo() {
-    // Cerrar popup y resetear pantalla inicial
-    const popup = document.getElementById('popupYaLeida');
-    popup.classList.add('oculto');
-    popup.style.display = 'none';
-
-    datosPendientes     = null;
-    eansPendientes      = [];
-    eansLeidos          = {};
-    modoEscaneoComp     = false;
-
-    document.getElementById('resultados').classList.add('oculto');
-    document.getElementById('mensaje').classList.add('oculto');
-    document.getElementById('inputOF').value = '';
-    document.getElementById('inputOF').focus();
-}
-
-// ── ESCÁNER DE CÁMARA PARA COMPONENTES ───────────────
-let scannerComp     = null;
-let bloqueandoScan  = false;
+// ── CÁMARA COMPONENTES ────────────────────────────────
+let scannerComp = null;
 
 function activarCamaraComp() {
-
     if (!modoEscaneoComp) {
         mostrarMensaje('Primero busca una OF', 'error');
         return;
@@ -509,21 +551,16 @@ function activarCamaraComp() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 150 } },
         function (codigoLeido) {
-
-            // Evitar lecturas duplicadas del mismo codigo
             if (bloqueandoScan) return;
             bloqueandoScan = true;
             setTimeout(function () { bloqueandoScan = false; }, 1500);
 
             procesarEscaneo(codigoLeido);
 
-            // Comprobar si ya terminamos para cerrar la camara
             const todosLeidos = eansPendientes.every(function (ean) {
                 return eansLeidos[ean];
             });
-            if (todosLeidos) {
-                pararCamaraComp();
-            }
+            if (todosLeidos) pararCamaraComp();
         },
         function (error) { }
     ).catch(function (err) {
@@ -537,11 +574,54 @@ function pararCamaraComp() {
         scannerComp.stop().then(function () {
             scannerComp.clear();
             scannerComp = null;
-        }).catch(function () {
-            scannerComp = null;
-        });
+        }).catch(function () { scannerComp = null; });
     }
     document.getElementById('zonaScannerComp').classList.add('oculto');
     document.getElementById('btnScanComp').classList.remove('oculto');
     bloqueandoScan = false;
+}
+
+
+// ── CÁMARA NÚMERO DE SERIE ────────────────────────────
+function activarCamaraSerie() {
+    document.getElementById('zonaScannerSerie').classList.remove('oculto');
+    document.getElementById('btnScanSerie').classList.add('oculto');
+
+    scannerSerie = new Html5Qrcode('visorCamaraSerie');
+
+    scannerSerie.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        function (codigoLeido) {
+            if (bloqueandoSerie) return;
+            bloqueandoSerie = true;
+            setTimeout(function () { bloqueandoSerie = false; }, 2000);
+
+            pararCamaraSerie();
+            validarSerie(codigoLeido);
+        },
+        function (error) { }
+    ).catch(function (err) {
+        document.getElementById('mensajeSerie').textContent =
+            'No se pudo acceder a la cámara: ' + err;
+        document.getElementById('mensajeSerie').className = 'mensaje error';
+        document.getElementById('mensajeSerie').classList.remove('oculto');
+        pararCamaraSerie();
+    });
+}
+
+function pararCamaraSerie() {
+    if (scannerSerie) {
+        scannerSerie.stop().then(function () {
+            scannerSerie.clear();
+            scannerSerie = null;
+        }).catch(function () { scannerSerie = null; });
+    }
+    if (document.getElementById('zonaScannerSerie')) {
+        document.getElementById('zonaScannerSerie').classList.add('oculto');
+    }
+    if (document.getElementById('btnScanSerie')) {
+        document.getElementById('btnScanSerie').classList.remove('oculto');
+    }
+    bloqueandoSerie = false;
 }
