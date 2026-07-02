@@ -259,6 +259,7 @@ function mostrarResultados(datos) {
 
     if (eansPendientes.length > 0) {
         modoEscaneoComp = true;
+        document.getElementById('inputEan').focus();
     } else {
         mostrarMensaje('Esta OF no tiene componentes con código EAN asignado.', 'error');
     }
