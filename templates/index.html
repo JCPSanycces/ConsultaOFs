@@ -232,6 +232,28 @@
             </div>
         </div>
 
+        <!-- POPUP SOLICITUD DE CORREO -->
+        <div id="popupCorreo" class="popup-overlay oculto" style="display:none">
+            <div class="popup-caja">
+                <div class="popup-icono" style="font-size:40px; margin-bottom:12px;">✉</div>
+                <h2>Identificación del dispositivo</h2>
+                <p>Introduce tu correo electrónico para identificar este dispositivo.</p>
+                <div class="input-ean-grupo" style="margin-top:16px; margin-bottom:8px;">
+                    <input
+                        type="email"
+                        id="inputCorreo"
+                        placeholder="tu@correo.com"
+                        autocomplete="email"
+                        style="font-size:16px;"
+                    >
+                </div>
+                <div id="mensajeCorreo" class="mensaje oculto" style="margin-bottom:12px;"></div>
+                <button onclick="guardarCorreo()" class="btn-popup" style="width:100%;">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+
     </main>
 
     <script src="/static/js/app.js"></script>

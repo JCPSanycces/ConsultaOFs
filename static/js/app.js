@@ -13,6 +13,7 @@ let ofTieneSeries   = false;
 let scannerSerie    = null;
 let bloqueandoSerie = false;
 let bloqueandoScan  = false;
+let correoUsuario   = '';
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -43,6 +44,58 @@ document
         const serie = this.value.trim().toUpperCase();
         this.value  = '';
         if (serie) validarSerie(serie);
+    });
+
+
+// ── GESTIÓN DE CORREO DE USUARIO ──────────────────────
+function inicializarCorreo() {
+    const correoGuardado = localStorage.getItem('correoUsuario');
+    if (correoGuardado) {
+        correoUsuario = correoGuardado;
+        console.log('Correo cargado:', correoUsuario);
+    } else {
+        mostrarPopupCorreo();
+    }
+}
+
+// Mostrar popup para introducir correo
+function mostrarPopupCorreo() {
+    const popup = document.getElementById('popupCorreo');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+    document.getElementById('inputCorreo').focus();
+}
+
+// Guardar correo en localStorage y cerrar popup
+function guardarCorreo() {
+    const input  = document.getElementById('inputCorreo');
+    const correo = input.value.trim().toLowerCase();
+    const divMsg = document.getElementById('mensajeCorreo');
+
+    // Validacion basica de formato email
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(correo)) {
+        divMsg.textContent = '⚠ Introduce un correo válido';
+        divMsg.className   = 'mensaje error';
+        divMsg.classList.remove('oculto');
+        return;
+    }
+
+    correoUsuario = correo;
+    localStorage.setItem('correoUsuario', correo);
+
+    const popup = document.getElementById('popupCorreo');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    console.log('Correo guardado:', correoUsuario);
+}
+
+// Permitir confirmar con Enter en el campo de correo
+document
+    .getElementById('inputCorreo')
+    .addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') guardarCorreo();
     });
 
 
@@ -264,6 +317,7 @@ function procesarEscaneo(codigo) {
     });
 
     if (todosLeidos) {
+        reproducirSonido('completo');
         const numOfActual = document.getElementById('rNumOf').textContent.trim();
 
         fetch('/series', {
@@ -278,12 +332,12 @@ function procesarEscaneo(codigo) {
                 mostrarBloqueSeries(json.total);
             } else {
                 ofTieneSeries = false;
-                finalizarOf(numOfActual);
+                finalizarOf(numOfActual, '');
             }
         })
         .catch(function (e) {
             console.error('Error al comprobar series:', e);
-            finalizarOf(numOfActual);
+            finalizarOf(numOfActual, '');
         });
     }
 }
@@ -338,6 +392,8 @@ async function validarSerie(numSerie) {
         }
 
         if (json.existe) {
+            reproducirSonido('completo');
+
             pararCamaraSerie();
 
             const popup = document.getElementById('popupSerie');
@@ -345,7 +401,9 @@ async function validarSerie(numSerie) {
             popup.style.display = 'none';
 
             const numOf = document.getElementById('rNumOf').textContent.trim();
-            setTimeout(function () { finalizarOf(numOf); }, 400);
+
+            // ── CAMBIO: se pasa numSerie a finalizarOf ──────────
+            setTimeout(function () { finalizarOf(numOf, numSerie); }, 400);
 
         } else {
             reproducirSonido('error');
@@ -367,11 +425,35 @@ async function validarSerie(numSerie) {
 
 
 // ── FINALIZAR OF ──────────────────────────────────────
-async function finalizarOf(numOf) {
-    reproducirSonido('completo');
+async function finalizarOf(numOf, numSerie) {
+    await registrarValidacion(numOf, numSerie || '');
     await completarOf(numOf);
     await imprimirEtiqueta(numOf);
     setTimeout(function () { mostrarPopupCompleto(); }, 400);
+}
+
+
+// ── REGISTRAR VALIDACIÓN EN ZAPPVALIDAOF ─────────────
+async function registrarValidacion(numOf, numSerie) {
+    try {
+        const resp = await fetch('/registrar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                num_of:    numOf,
+                num_serie: numSerie || '',
+                correo:    correoUsuario || ''
+            })
+        });
+        const json = await resp.json();
+        if (!resp.ok) {
+            console.error('Error al registrar validacion:', json.error);
+        } else {
+            console.log('Validacion registrada para OF:', json.num_of);
+        }
+    } catch (e) {
+        console.error('Error de conexion al registrar validacion:', e);
+    }
 }
 
 
@@ -610,6 +692,7 @@ function activarCamaraSerie() {
     });
 }
 
+// ── PARAR CÁMARA NÚMERO DE SERIE ───────────────────────
 function pararCamaraSerie() {
     if (scannerSerie) {
         scannerSerie.stop().then(function () {
@@ -625,3 +708,6 @@ function pararCamaraSerie() {
     }
     bloqueandoSerie = false;
 }
+
+// ── INICIO ────────────────────────────────────────────
+inicializarCorreo();

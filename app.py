@@ -141,6 +141,67 @@ def completar_of():
         return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+
+# Endpoint para registrar una OF validada en la tabla ZAPPVALIDAOF
+@app.route('/registrar', methods=['POST'])
+def registrar_validacion():
+    """Guarda el registro de OF validada en ZAPPVALIDAOF."""
+    num_of    = request.json.get('num_of',    '').strip().upper()
+    num_serie = request.json.get('num_serie', '').strip().upper()
+    correo    = request.json.get('correo',    '').strip().lower()
+    ahora     = datetime.now()
+    fecha_hoy = ahora.strftime('%d/%m/%Y')
+    hora_hoy  = ahora.strftime('%H:%M:%S')
+
+    if not num_of:
+        return jsonify({'error': 'Numero de OF no proporcionado'}), 400
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO x3prd.SANYCCES.ZAPPVALIDAOF (
+                MFGNUM_0,
+                NSERIE_0,
+                ZCORREOUSER_0,
+                ZFECHACREA_0,
+                ZHORACREA_0,
+                CREDATTIM_0,
+                UPDDATTIM_0,
+                AUUID_0,
+                CREUSR_0,
+                UPDUSR_0
+            ) VALUES (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                GETDATE(),
+                GETDATE(),
+                CONVERT(binary(16), NEWID()),
+                'ADMIN',
+                'ADMIN'
+            )
+        """, num_of, num_serie, correo, fecha_hoy, hora_hoy)
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'ok':        True,
+            'num_of':    num_of,
+            'num_serie': num_serie,
+            'correo':    correo
+        })
+
+    except pyodbc.Error as e:
+        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+    
     
 # Endpoint para comprobar si una OF tiene numeros de serie
 @app.route('/series', methods=['POST'])
