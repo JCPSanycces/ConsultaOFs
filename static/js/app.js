@@ -722,5 +722,21 @@ function pararCamaraSerie() {
     bloqueandoSerie = false;
 }
 
+// ── BÚSQUEDA DE EAN ───────────────────────────────────
+function buscarEan() {
+    const input = document.getElementById('inputEan');
+    const ean   = input.value.trim().toUpperCase();
+    input.value = '';
+
+    if (!ean) return;
+
+    if (!modoEscaneoComp) {
+        mostrarMensaje('Primero busca una OF', 'error');
+        return;
+    }
+
+    procesarEscaneo(ean);
+}
+
 // ── INICIO ────────────────────────────────────────────
 inicializarCorreo();

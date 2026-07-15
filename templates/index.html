@@ -130,13 +130,18 @@
 
                 <!-- CAMPO DE LECTURA PARA PC (solo visible en pantallas grandes) -->
                 <div id="inputEanGrupo" class="input-ean-grupo">
-                    <input
-                        type="text"
-                        id="inputEan"
-                        placeholder="Escanea o introduce el EAN del componente"
-                        autocomplete="off"
-                        autocapitalize="off"
-                    >
+                    <div class="input-grupo">
+                        <input
+                            type="text"
+                            id="inputEan"
+                            placeholder="Escanea o introduce el EAN del componente"
+                            autocomplete="off"
+                            autocapitalize="off"
+                        >
+                        <button id="btnBuscarEan" onclick="buscarEan()">
+                            Buscar
+                        </button>
+                    </div>
                 </div>
 
                 <!-- BOTÓN DE CÁMARA PARA COMPONENTES (visible en móvil y tablet) -->
