@@ -59,14 +59,8 @@ def buscar_of():
         cursor = conn.cursor()
 
         # La consulta usa la vista creada en SQL Server
-        cursor.execute(
-            """
-            SELECT *
-            FROM {DB}.ZVOFCONSULTA
-            WHERE NUM_OF_0 = ?
-            """,
-            num_of
-        )
+        sql = "SELECT * FROM " + DB + ".ZVOFCONSULTA WHERE NUM_OF_0 = ?"
+        cursor.execute(sql, num_of)
 
         # Convertir los resultados a una lista de diccionarios
         columnas = [col[0] for col in cursor.description]
@@ -122,11 +116,8 @@ def completar_of():
         conn   = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
-            UPDATE {DB}.MFGITM
-            SET    ZNUMLECAPP_0 = ISNULL(ZNUMLECAPP_0, 0) + 1
-            WHERE  MFGNUM_0 = ?
-        """, num_of)
+        sql = "UPDATE " + DB + ".MFGITM SET ZNUMLECAPP_0 = ISNULL(ZNUMLECAPP_0, 0) + 1 WHERE MFGNUM_0 = ?"
+        cursor.execute(sql, num_of)
 
         if cursor.rowcount == 0:
             conn.rollback()
@@ -163,31 +154,12 @@ def registrar_validacion():
         conn   = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
-            INSERT INTO {DB}.ZAPPVALIDAOF (
-                MFGNUM_0,
-                NSERIE_0,
-                ZCORREOUSER_0,
-                ZFECHACREA_0,
-                ZHORACREA_0,
-                CREDATTIM_0,
-                UPDDATTIM_0,
-                AUUID_0,
-                CREUSR_0,
-                UPDUSR_0
-            ) VALUES (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                GETDATE(),
-                GETDATE(),
-                CONVERT(binary(16), NEWID()),
-                'ADMIN',
-                'ADMIN'
-            )
-        """, num_of, num_serie, correo, fecha_hoy, hora_hoy)
+        sql = (
+                "INSERT INTO " + DB + ".ZAPPVALIDAOF "
+                "(MFGNUM_0, NSERIE_0, CREDATTIM_0, UPDDATTIM_0, AUUID_0, CREUSR_0, UPDUSR_0, ZCORREOUSER_0) "
+                "VALUES (?, ?, GETDATE(), GETDATE(), CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?)"
+        )
+        cursor.execute(sql, num_of, num_serie, correo)
 
         conn.commit()
         cursor.close()
@@ -219,10 +191,8 @@ def comprobar_series():
         conn   = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            'SELECT * FROM {DB}.YMFGSERIE WHERE MFGNUM_0 = ?',
-            num_of
-        )
+        sql = "SELECT * FROM " + DB + ".YMFGSERIE WHERE MFGNUM_0 = ?"
+        cursor.execute(sql, num_of)
 
         columnas = [col[0] for col in cursor.description]
         filas    = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
