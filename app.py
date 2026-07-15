@@ -26,6 +26,9 @@ def get_connection():
 
     return pyodbc.connect(cadena, timeout=10)
 
+# Prefijo para las consultas SQL: nombrebbdd.nombreesquema
+DB = f"{config.SQL_DATABASE}.{config.SQL_SCHEMA}"
+
 
 # Página principal
 @app.route("/")
@@ -59,7 +62,7 @@ def buscar_of():
         cursor.execute(
             """
             SELECT *
-            FROM SANYCCES.ZVOFCONSULTA
+            FROM {DB}.ZVOFCONSULTA
             WHERE NUM_OF_0 = ?
             """,
             num_of
@@ -120,7 +123,7 @@ def completar_of():
         cursor = conn.cursor()
 
         cursor.execute("""
-            UPDATE x3prd.SANYCCES.MFGITM
+            UPDATE {DB}.MFGITM
             SET    ZNUMLECAPP_0 = ISNULL(ZNUMLECAPP_0, 0) + 1
             WHERE  MFGNUM_0 = ?
         """, num_of)
@@ -161,7 +164,7 @@ def registrar_validacion():
         cursor = conn.cursor()
 
         cursor.execute("""
-            INSERT INTO x3prd.SANYCCES.ZAPPVALIDAOF (
+            INSERT INTO {DB}.ZAPPVALIDAOF (
                 MFGNUM_0,
                 NSERIE_0,
                 ZCORREOUSER_0,
@@ -217,7 +220,7 @@ def comprobar_series():
         cursor = conn.cursor()
 
         cursor.execute(
-            'SELECT * FROM x3prd.SANYCCES.YMFGSERIE WHERE MFGNUM_0 = ?',
+            'SELECT * FROM {DB}.YMFGSERIE WHERE MFGNUM_0 = ?',
             num_of
         )
 
@@ -261,7 +264,7 @@ def validar_serie():
         cursor = conn.cursor()
 
         cursor.execute(
-            'SELECT * FROM x3prd.SANYCCES.YMFGSERIE WHERE NSERIE_0 = ?',
+            'SELECT * FROM {DB}.YMFGSERIE WHERE NSERIE_0 = ?',
             num_serie
         )
 

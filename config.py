@@ -4,6 +4,7 @@
 SQL_SERVER = '172.17.0.10' # IP del servidor SQL Server 
 SQL_INSTANCE = 'SAGEX3' # Nombre de la instancia 
 SQL_DATABASE = 'x3prd' # Nombre de la base de datos 
+SQL_SCHEMA = 'SANYCCES' # Nombre del esquema de la base de datos
 SQL_USER = 'sa' # Usuario de SQL Server 
 SQL_PASSWORD = 'X3_Polif.2021' # Contraseña 
 # Puerto donde escuchara la app Flask 
