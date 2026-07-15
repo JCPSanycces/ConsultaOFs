@@ -14,6 +14,8 @@ let scannerSerie    = null;
 let bloqueandoSerie = false;
 let bloqueandoScan  = false;
 let correoUsuario   = '';
+let lineaOf         = '';
+let articuloOf      = '';
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -218,6 +220,12 @@ function mostrarResultados(datos) {
     document.getElementById('rArticulo').textContent     = d.CODART_OF_0     || '-';
     document.getElementById('rDescArticulo').textContent = d.DESART_OF_0     || '-';
     document.getElementById('rEan').textContent          = d.EANART_OF_0     || '-';
+    document.getElementById('rLinea').textContent        = d.LINEA_OF_0      || '-';
+
+    // Guardar la linea para usarla al registrar
+    lineaOf = d.LINEA_OF_0 || '';
+
+    articuloOf = d.CODART_OF_0 || '';
 
     const qtyLanzada = parseFloat(d.QTY_LANZADA_0);
     document.getElementById('rQtyLanzada').textContent = Number.isFinite(qtyLanzada)
@@ -443,7 +451,9 @@ async function registrarValidacion(numOf, numSerie) {
             body:    JSON.stringify({
                 num_of:    numOf,
                 num_serie: numSerie || '',
-                correo:    correoUsuario || ''
+                correo:    correoUsuario || '',
+                linea:     lineaOf || '',
+                articulo:  articuloOf || ''
             })
         });
         const json = await resp.json();
@@ -518,6 +528,8 @@ function cerrarPopup() {
     eansLeidos      = {};
     modoEscaneoComp = false;
     ofTieneSeries   = false;
+    lineaOf         = '';
+    articuloOf      = '';
 
     document.getElementById('resultados').classList.add('oculto');
     document.getElementById('mensaje').classList.add('oculto');

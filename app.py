@@ -143,9 +143,13 @@ def registrar_validacion():
     num_of    = request.json.get('num_of',    '').strip().upper()
     num_serie = request.json.get('num_serie', '').strip().upper()
     correo    = request.json.get('correo',    '').strip().lower()
+    linea     = str(request.json.get('linea', '') or '').strip()
+    articulo  = request.json.get('articulo',  '').strip().upper()
     ahora     = datetime.now()
     fecha_hoy = ahora.strftime('%d/%m/%Y')
     hora_hoy  = ahora.strftime('%H:%M:%S')
+
+    print(f'[REGISTRAR] num_of={num_of}, num_serie={num_serie}, correo={correo}, linea={linea}')
 
     if not num_of:
         return jsonify({'error': 'Numero de OF no proporcionado'}), 400
@@ -156,25 +160,31 @@ def registrar_validacion():
 
         sql = (
                 "INSERT INTO " + DB + ".ZAPPVALIDAOF "
-                "(MFGNUM_0, NSERIE_0, CREDATTIM_0, UPDDATTIM_0, AUUID_0, CREUSR_0, UPDUSR_0, ZCORREOUSER_0) "
-                "VALUES (?, ?, GETDATE(), GETDATE(), CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?)"
+                "(MFGNUM_0, MFGLIN_0, ITMREF_0, NSERIE_0, CREDATTIM_0, UPDDATTIM_0, "
+                "AUUID_0, CREUSR_0, UPDUSR_0, ZCORREOUSER_0, ZFECHACREA_0, ZHORACREA_0) "
+                "VALUES (?, ?, ?, ?, GETDATE(), GETDATE(), "
+                "CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?, ?, ?)"
         )
-        cursor.execute(sql, num_of, num_serie, correo)
+        cursor.execute(sql, num_of, linea, articulo, num_serie, correo, fecha_hoy, hora_hoy)
 
         conn.commit()
         cursor.close()
         conn.close()
 
+        print(f'[REGISTRAR] Registro insertado correctamente')
         return jsonify({
             'ok':        True,
             'num_of':    num_of,
             'num_serie': num_serie,
-            'correo':    correo
+            'correo':    correo,
+            'linea':     linea
         })
 
     except pyodbc.Error as e:
+        print(f'[REGISTRAR] Error pyodbc: {str(e)}')
         return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
     except Exception as e:
+        print(f'[REGISTRAR] Error inesperado: {str(e)}')
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
     
     
@@ -233,10 +243,8 @@ def validar_serie():
         conn   = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            'SELECT * FROM {DB}.YMFGSERIE WHERE NSERIE_0 = ?',
-            num_serie
-        )
+        sql = "SELECT * FROM " + DB + ".YMFGSERIE WHERE NSERIE_0 = ?"
+        cursor.execute(sql, num_serie)
 
         columnas = [col[0] for col in cursor.description]
         filas    = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
