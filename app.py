@@ -9,7 +9,6 @@ from datetime import datetime
 # Crear la app Flask
 app = Flask(__name__)
 
-
 # Función para conectar a SQL Server
 def get_connection():
     """
@@ -29,7 +28,6 @@ def get_connection():
 # Prefijo para las consultas SQL: nombrebbdd.nombreesquema
 DB = f"{config.SQL_DATABASE}.{config.SQL_SCHEMA}"
 
-
 # Página principal
 @app.route("/")
 def index():
@@ -37,7 +35,6 @@ def index():
     Muestra la página principal de la app.
     """
     return render_template("index.html")
-
 
 # Endpoint de búsqueda de OF
 @app.route("/buscar", methods=["POST"])
@@ -102,7 +99,6 @@ def buscar_of():
             "error": f"Error inesperado: {str(e)}"
         }), 500
 
-
 # Endpoint para actualizar el número de veces que se ha leído correctamente una OF
 @app.route('/completar', methods=['POST'])
 def completar_of():
@@ -124,6 +120,20 @@ def completar_of():
             cursor.close()
             conn.close()
             return jsonify({'error': 'OF no encontrada en la tabla de artículos lanzados'}), 404
+
+        # Si la OF no lleva serie, y ya ha llegado a la cantidad lanzada,
+        # marcar el registro en ZAPPVALIDAOF como procesado = 2
+        sql_qty = "SELECT UOMEXTQTY_0, ZNUMLECAPP_0 FROM " + DB + ".MFGITM WHERE MFGNUM_0 = ?"
+        cursor.execute(sql_qty, num_of)
+        fila_qty = cursor.fetchone()
+
+        if fila_qty:
+            qty_lanzada = fila_qty[0] if fila_qty[0] is not None else 0
+            num_lec_app = fila_qty[1] if fila_qty[1] is not None else 0
+
+            if num_lec_app >= qty_lanzada:
+                sql_proc = "UPDATE " + DB + ".ZAPPVALIDAOF SET ZPROCESADO_0 = 2 WHERE MFGNUM_0 = ? AND ISNULL(NSERIE_0, '') = ''"
+                cursor.execute(sql_proc, num_of)
 
         conn.commit()
         cursor.close()
@@ -158,6 +168,53 @@ def registrar_validacion():
         conn   = get_connection()
         cursor = conn.cursor()
 
+        # Determinar si la OF lleva serie o no
+        lleva_serie = bool(num_serie)
+
+        if lleva_serie:
+            # OF con serie: se controla duplicado por MFGNUM_0 + NSERIE_0
+            sql_check = (
+                "SELECT COUNT(*) "
+                "FROM " + DB + ".ZAPPVALIDAOF "
+                "WHERE MFGNUM_0 = ? AND NSERIE_0 = ?"
+            )
+            cursor.execute(sql_check, num_of, num_serie)
+            existe = cursor.fetchone()[0]
+
+            if existe > 0:
+                cursor.close()
+                conn.close()
+                return jsonify({'error': 'Esta OF y serie ya están registradas'}), 409
+
+            zprocesado = 2
+
+        else:
+            # OF sin serie: permitir una única inserción y usar ZPROCESADO_0 = 1
+            sql_check = (
+                "SELECT COUNT(*) "
+                "FROM " + DB + ".ZAPPVALIDAOF "
+                "WHERE MFGNUM_0 = ? AND ISNULL(NSERIE_0, '') = ''"
+            )
+            cursor.execute(sql_check, num_of)
+            existe = cursor.fetchone()[0]
+
+            zprocesado = 1
+
+            # Si ya existe, no volvemos a insertar otra vez
+            if existe > 0:
+                conn.commit()
+                cursor.close()
+                conn.close()
+                return jsonify({
+                    'ok': True,
+                    'num_of': num_of,
+                    'num_serie': num_serie,
+                    'correo': correo,
+                    'linea': linea,
+                    'zprocesado': zprocesado,
+                    'mensaje': 'Registro ya existente para OF sin serie'
+                })
+
         sql = (
                 "INSERT INTO " + DB + ".ZAPPVALIDAOF "
                 "(MFGNUM_0, MFGLIN_0, ITMREF_0, NSERIE_0, ZPROCESADO_0, CREDATTIM_0, UPDDATTIM_0, "
@@ -165,7 +222,7 @@ def registrar_validacion():
                 "VALUES (?, ?, ?, ?, ?, GETDATE(), GETDATE(), "
                 "CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?, ?, ?)"
         )
-        cursor.execute(sql, num_of, linea, articulo, num_serie, 2, correo, fecha_hoy, hora_hoy)
+        cursor.execute(sql, num_of, linea, articulo, num_serie, zprocesado, correo, fecha_hoy, hora_hoy)
 
         conn.commit()
         cursor.close()
@@ -177,7 +234,8 @@ def registrar_validacion():
             'num_of':    num_of,
             'num_serie': num_serie,
             'correo':    correo,
-            'linea':     linea
+            'linea':     linea,
+            'zprocesado': zprocesado
         })
 
     except pyodbc.Error as e:
@@ -186,8 +244,7 @@ def registrar_validacion():
     except Exception as e:
         print(f'[REGISTRAR] Error inesperado: {str(e)}')
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
-    
-    
+
 # Endpoint para comprobar si una OF tiene numeros de serie
 @app.route('/series', methods=['POST'])
 def comprobar_series():
@@ -271,7 +328,6 @@ def validar_serie():
     except Exception as e:
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
 
-
 # Endpoint para comprobar si un numero de serie ya fue registrado en ZAPPVALIDAOF
 @app.route('/serie-ya-leida', methods=['POST'])
 def serie_ya_leida():
@@ -301,7 +357,6 @@ def serie_ya_leida():
     except Exception as e:
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
 
-
 # Endpoint para imprimir una etiqueta al finalizar el escaneo de todos los componentes de la OF
 @app.route('/imprimir', methods=['POST'])
 def imprimir_etiqueta():
@@ -311,7 +366,7 @@ def imprimir_etiqueta():
     num_of   = request.json.get('num_of', '').strip().upper()
     if not num_of:
         return jsonify({'error': 'Numero de OF no proporcionado'}), 400
-    
+
     ahora     = datetime.now()
     mascara   = ahora.strftime('%S%M%H%y%m%d')  # ssmmHHYYMMDD
 
@@ -398,7 +453,6 @@ def imprimir_etiqueta():
         }), 207  # 207 = exito parcial
 
     return jsonify({'ok': True})
-
 
 # Arrancar la app
 if __name__ == '__main__':

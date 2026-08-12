@@ -463,9 +463,24 @@ async function validarSerie(numSerie) {
 
 // ── FINALIZAR OF ──────────────────────────────────────
 async function finalizarOf(numOf, numSerie) {
-    await registrarValidacion(numOf, numSerie || '');
-    await completarOf(numOf);
-    await imprimirEtiqueta(numOf);
+    const okRegistro = await registrarValidacion(numOf, numSerie || '');
+    if (!okRegistro) {
+        mostrarMensaje('No se pudo registrar la validación', 'error');
+        return;
+    }
+
+    const okCompletar = await completarOf(numOf);
+    if (!okCompletar) {
+        mostrarMensaje('No se pudo completar la OF', 'error');
+        return;
+    }
+
+    const okImprimir = await imprimirEtiqueta(numOf);
+    if (!okImprimir) {
+        mostrarMensaje('OF completada, pero no se pudo imprimir la etiqueta', 'error');
+        return;
+    }
+
     setTimeout(function () { mostrarPopupCompleto(); }, 400);
 }
 
@@ -487,11 +502,14 @@ async function registrarValidacion(numOf, numSerie) {
         const json = await resp.json();
         if (!resp.ok) {
             console.error('Error al registrar validacion:', json.error);
+            return false;
         } else {
             console.log('Validacion registrada para OF:', json.num_of);
+            return true;
         }
     } catch (e) {
         console.error('Error de conexion al registrar validacion:', e);
+        return false;
     }
 }
 
@@ -505,10 +523,16 @@ async function completarOf(numOf) {
             body:    JSON.stringify({ num_of: numOf })
         });
         const json = await resp.json();
-        if (!resp.ok) console.error('Error al actualizar lecturas:', json.error);
-        else console.log('Lecturas actualizadas para OF:', json.num_of);
+        if (!resp.ok) {
+            console.error('Error al actualizar lecturas:', json.error);
+            return false;
+        } else {
+            console.log('Lecturas actualizadas para OF:', json.num_of);
+            return true;
+        }
     } catch (e) {
         console.error('Error de conexion al completar OF:', e);
+        return false;
     }
 }
 
@@ -522,10 +546,16 @@ async function imprimirEtiqueta(numOf) {
             body:    JSON.stringify({ num_of: numOf })
         });
         const json = await resp.json();
-        if (!resp.ok) console.error('Error al imprimir:', json.error);
-        else console.log('Etiqueta enviada correctamente');
+        if (!resp.ok) {
+            console.error('Error al imprimir:', json.error);
+            return false;
+        } else {
+            console.log('Etiqueta enviada correctamente');
+            return true;
+        }
     } catch (e) {
         console.error('Error de conexion al imprimir:', e);
+        return false;
     }
 }
 
@@ -788,6 +818,9 @@ function popupSerieYaLeidaNo() {
     const popup = document.getElementById('popupSerieYaLeida');
     popup.classList.add('oculto');
     popup.style.display = 'none';
+
+    // Parar cámara de serie por seguridad
+    pararCamaraSerie();
 
     // Ocultar resultados / mensajes
     document.getElementById('resultados').classList.add('oculto');
