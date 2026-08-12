@@ -732,5 +732,17 @@ function buscarEan() {
     procesarEscaneo(ean);
 }
 
+// ── BÚSQUEDA DE NÚMERO DE SERIE ─────────────────────────────────
+function buscarSerie() {
+    const input = document.getElementById('inputSerie');
+    const serie = input.value.trim().toUpperCase();
+    input.value = '';
+
+    if (!serie) return;
+
+    validarSerie(serie);
+}
+
+
 // ── INICIO ────────────────────────────────────────────
 inicializarCorreo();

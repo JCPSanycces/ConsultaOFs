@@ -190,7 +190,7 @@
                         Esta OF requiere la lectura de un número de serie.
                     </p>
 
-                    <div id="inputSerieGrupo" class="input-ean-grupo">
+                    <div id="inputSerieGrupo" class="input-grupo">
                         <input
                             type="text"
                             id="inputSerie"
@@ -199,6 +199,9 @@
                             autocapitalize="characters"
                             style="font-size:18px;"
                         >
+                        <button id="btnBuscarSerie" onclick="buscarSerie()" >
+                            Buscar
+                        </button>
                     </div>
 
                     <button id="btnScanSerie" onclick="activarCamaraSerie()" class="btn-camara" style="margin-top:0;">
