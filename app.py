@@ -370,12 +370,12 @@ def imprimir_etiqueta():
     ahora     = datetime.now()
     mascara   = ahora.strftime('%S%M%H%y%m%d')  # ssmmHHYYMMDD
 
-    # ── Etiqueta ZPL ──────────────────────────────────────────────────
+    # ── Etiqueta ZPL ZEBRA ───────────────────────────────────────────
     # Ajusta ^LL (altura etiqueta) y ^PW (ancho) segun el tamaño
     # de tus etiquetas. Los valores son en dots a 203dpi.
     # ^LL203 = etiqueta de 1 pulgada de alto (25mm)
     # ^PW609 = etiqueta de 3 pulgadas de ancho (76mm)
-    zpl = (
+    zpl_zebra = (
         "^XA"
         "^CI28"
         "^PW812"
@@ -427,12 +427,71 @@ def imprimir_etiqueta():
         "^XZ"
     )
 
+    # ── Etiqueta ZPL GODEX ───────────────────────────────────────────
+    # Ajustada para Godex G500 (coordenadas y tamaños algo más conservadores)
+    zpl_godex = (
+        "^XA"
+        "^CI28"
+        "^PW812"
+        "^LL482"
+        "^MMT"
+        "^MNM"
+
+        # ── Numero de OF centrado ────────────────────────────
+        "^FO0,24"
+        "^FB812,1,0,C,0"
+        "^A0N,32,32"
+        "^FDOrden de Fabricacion:^FS"
+
+        "^FO0,64"
+        "^FB812,1,0,C,0"
+        "^A0N,46,46"
+        f"^FD{num_of}^FS"
+
+        # ── Linea separadora superior ────────────────────────
+        "^FO28,124"
+        "^GB756,2,2^FS"
+
+        # ── Centro izquierda: Control de calidad ─────────────
+        "^FO30,142"
+        "^A0N,34,34"
+        "^FDControl de calidad.^FS"
+
+        "^FO30,184"
+        "^A0N,34,34"
+        "^FDLectura correcta^FS"
+
+        # ── Centro derecha: fecha enmascarada ─────────────────
+        "^FO0,142"
+        "^FB782,1,0,R,0"
+        "^A0N,28,28"
+        f"^FD{mascara}^FS"
+
+        # ── Linea separadora inferior ────────────────────────
+        "^FO28,238"
+        "^GB756,2,2^FS"
+
+        # ── Codigo de barras centrado y mas grande ────────────
+        "^FO150,256"
+        "^BY2,3,92"
+        "^BCN,92,Y,N,N"
+        f"^FD{num_of}^FS"
+
+        "^XZ"
+    )
+
+    # Seleccionar plantilla y impresora según config
+    if config.IMPRESORA_ACTIVA == 'ZEBRA':
+        zpl = zpl_zebra
+    elif config.IMPRESORA_ACTIVA == 'GODEX':
+        zpl = zpl_godex
+    else:
+        return jsonify({'error': 'IMPRESORA_ACTIVA no configurada correctamente'}), 500
+
     zpl_bytes = zpl.encode('utf-8')
 
-    impresoras = [
-        # {'nombre': 'Zebra ZT230',  'ip': '192.168.1.81', 'puerto': 9100},
-        {'nombre': 'Godex G500',   'ip': '192.168.1.87', 'puerto': 9100},
-    ]
+    impresora = config.IMPRESORAS[config.IMPRESORA_ACTIVA]
+    impresoras = [impresora]
 
     errores = []
 
@@ -453,6 +512,7 @@ def imprimir_etiqueta():
         }), 207  # 207 = exito parcial
 
     return jsonify({'ok': True})
+
 
 # Arrancar la app
 if __name__ == '__main__':
