@@ -16,6 +16,7 @@ let bloqueandoScan  = false;
 let correoUsuario   = '';
 let lineaOf         = '';
 let articuloOf      = '';
+let qtyLanzada      = 0;
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -182,11 +183,13 @@ async function buscarOF() {
 
         const d = json.datos[0];
 
-        const qtyLanzada = parseFloat(d.QTY_LANZADA_0) || 0;
+        const qty = Number(d.QTY_LANZADA_0);
+        qtyLanzada = Number.isFinite(qty) ? Math.trunc(qty) : 0;
+
         const numlec = parseInt(d.NUMLEC_OF_0 || 0, 10);
 
         if (numlec >= qtyLanzada) {
-            mostrarPopupOFCompleta(numlec);
+            mostrarPopupOFCompleta();
             return;
         }
 
@@ -230,9 +233,11 @@ function mostrarResultados(datos) {
 
     articuloOf = d.CODART_OF_0 || '';
 
-    const qtyLanzada = parseFloat(d.QTY_LANZADA_0);
-    document.getElementById('rQtyLanzada').textContent = Number.isFinite(qtyLanzada)
-        ? qtyLanzada.toFixed(4)
+    const qty = Number(d.QTY_LANZADA_0);
+    qtyLanzada = Number.isFinite(qty) ? Math.trunc(qty) : 0;
+
+    document.getElementById('rQtyLanzada').textContent = Number.isFinite(qty)
+        ? qty.toFixed(4)
         : (d.QTY_LANZADA_0 || '-');
 
     const tbody = document.getElementById('cuerpoTabla');
@@ -554,11 +559,9 @@ function cerrarPopup() {
 }
 
 // ── POPUP OF YA LEIDA COMPLETA ───────────────────────
-function mostrarPopupOFCompleta(veces) {
-    const qty = document.getElementById('rQtyLanzada').textContent.trim();
-
+function mostrarPopupOFCompleta() {
     document.getElementById('popupOFCompletaMensaje').textContent =
-        'Esta OF ya ha sido leída por completo (' + qty + ' veces).';
+        'Esta OF ya ha sido leída por completo (' + qtyLanzada + ' veces).';
 
     const popup = document.getElementById('popupOFCompleta');
     popup.classList.remove('oculto');
