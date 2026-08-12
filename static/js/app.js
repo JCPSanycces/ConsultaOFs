@@ -180,15 +180,18 @@ async function buscarOF() {
             return;
         }
 
-        const numlec = json.datos[0].NUMLEC_OF_0 || 0;
+        const d = json.datos[0];
 
-        if (numlec > 0) {
-            datosPendientes = json.datos;
-            mostrarPopupYaLeida(numlec);
-        } else {
-            mostrarResultados(json.datos);
-            divMsg.classList.add('oculto');
+        const qtyLanzada = parseFloat(d.QTY_LANZADA_0) || 0;
+        const numlec = parseInt(d.NUMLEC_OF_0 || 0, 10);
+
+        if (numlec >= qtyLanzada) {
+            mostrarPopupOFCompleta(numlec);
+            return;
         }
+
+        mostrarResultados(json.datos);
+        divMsg.classList.add('oculto');
 
     } catch (e) {
         mostrarMensaje('Error: ' + e.message, 'error');
@@ -550,48 +553,36 @@ function cerrarPopup() {
     document.getElementById('inputOF').focus();
 }
 
+// ── POPUP OF YA LEIDA COMPLETA ───────────────────────
+function mostrarPopupOFCompleta(veces) {
+    const qty = document.getElementById('rQtyLanzada').textContent.trim();
 
-// ── POPUP OF YA LEIDA ─────────────────────────────────
-function mostrarPopupYaLeida(veces) {
-    const msg = veces === 1
-        ? 'Esta OF ya fue leída 1 vez anteriormente. ¿Desea continuar?'
-        : 'Esta OF ya fue leída ' + veces + ' veces anteriormente. ¿Desea continuar?';
+    document.getElementById('popupOFCompletaMensaje').textContent =
+        'Esta OF ya ha sido leída por completo (' + qty + ' veces).';
 
-    document.getElementById('popupYaLeidaMensaje').textContent = msg;
-
-    const popup = document.getElementById('popupYaLeida');
+    const popup = document.getElementById('popupOFCompleta');
     popup.classList.remove('oculto');
     popup.style.display = 'flex';
 }
 
-function popupYaLeidaSi() {
-    const popup = document.getElementById('popupYaLeida');
+// Cerrar popup de OF completa y reiniciar pantalla
+function cerrarPopupOFCompleta() {
+    const popup = document.getElementById('popupOFCompleta');
     popup.classList.add('oculto');
     popup.style.display = 'none';
 
-    if (datosPendientes) {
-        mostrarResultados(datosPendientes);
-        document.getElementById('mensaje').classList.add('oculto');
-        datosPendientes = null;
-    }
-}
-
-function popupYaLeidaNo() {
-    const popup = document.getElementById('popupYaLeida');
-    popup.classList.add('oculto');
-    popup.style.display = 'none';
-
-    datosPendientes = null;
-    eansPendientes  = [];
-    eansLeidos      = {};
-    modoEscaneoComp = false;
-
-    document.getElementById('resultados').classList.add('oculto');
-    document.getElementById('mensaje').classList.add('oculto');
+    // Reiniciar pantalla inicial
     document.getElementById('inputOF').value = '';
     document.getElementById('inputOF').focus();
-}
 
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('resultados').classList.add('oculto');
+
+    eansPendientes = [];
+    eansLeidos = {};
+    modoEscaneoComp = false;
+    datosPendientes = null;
+}
 
 // ── CÁMARA OF (búsqueda inicial) ──────────────────────
 let scanner = null;
