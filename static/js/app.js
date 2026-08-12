@@ -385,6 +385,7 @@ function mostrarBloqueSeries(total) {
     document.getElementById('inputSerie').focus();
 }
 
+// ── VALIDAR NÚMERO DE SERIE ───────────────────────────
 async function validarSerie(numSerie) {
 
     numSerie = numSerie.trim().toUpperCase();
@@ -393,6 +394,25 @@ async function validarSerie(numSerie) {
     const divMsg = document.getElementById('mensajeSerie');
 
     try {
+        // ── COMPROBAR SI YA FUE LEÍDA EN ZAPPVALIDAOF ─────
+        const respRepetida = await fetch('/serie-ya-leida', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ num_serie: numSerie })
+        });
+
+        const jsonRepetida = await respRepetida.json();
+
+        if (respRepetida.ok && jsonRepetida.existe) {
+            reproducirSonido('error');
+            pararCamaraSerie();
+
+            // Mostrar popup de aviso
+            mostrarPopupSerieYaLeida();
+            return;
+        }
+
+        // ── VALIDAR SI LA SERIE EXISTE EN YMFGSERIE ───────
         const resp = await fetch('/validar-serie', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -743,6 +763,55 @@ function buscarSerie() {
     validarSerie(serie);
 }
 
+// ── POPUP DE NÚMERO DE SERIE YA LEÍDO ─────────────────
+function mostrarPopupSerieYaLeida() {
+    const popup = document.getElementById('popupSerieYaLeida');
+    popup.classList.remove('oculto');
+    popup.style.display = 'flex';
+}
+
+// Cerrar popup de número de serie ya leído y permitir reintento
+function popupSerieYaLeidaSi() {
+    // Vaciar el campo de serie y permitir reintento
+    const input = document.getElementById('inputSerie');
+    input.value = '';
+    input.focus();
+
+    const popup = document.getElementById('popupSerieYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+}
+
+// Cerrar popup de número de serie ya leído y volver a pantalla inicial
+function popupSerieYaLeidaNo() {
+    // Volver a pantalla inicial
+    const popup = document.getElementById('popupSerieYaLeida');
+    popup.classList.add('oculto');
+    popup.style.display = 'none';
+
+    // Ocultar resultados / mensajes
+    document.getElementById('resultados').classList.add('oculto');
+    document.getElementById('mensaje').classList.add('oculto');
+
+    // Ocultar popup serie
+    const popupSerie = document.getElementById('popupSerie');
+    popupSerie.classList.add('oculto');
+    popupSerie.style.display = 'none';
+
+    // Reiniciar campos
+    document.getElementById('inputSerie').value = '';
+
+    document.getElementById('inputOF').value = '';
+    document.getElementById('inputOF').focus();
+
+    // Reiniciar variables de escaneo
+    eansPendientes  = [];
+    eansLeidos      = {};
+    modoEscaneoComp = false;
+    ofTieneSeries   = false;
+    lineaOf         = '';
+    articuloOf      = '';
+}
 
 // ── INICIO ────────────────────────────────────────────
 inicializarCorreo();

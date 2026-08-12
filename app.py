@@ -272,6 +272,36 @@ def validar_serie():
         return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
 
 
+# Endpoint para comprobar si un numero de serie ya fue registrado en ZAPPVALIDAOF
+@app.route('/serie-ya-leida', methods=['POST'])
+def serie_ya_leida():
+    """Comprueba si el número de serie ya existe en ZAPPVALIDAOF."""
+    num_serie = request.json.get('num_serie', '').strip().upper()
+
+    if not num_serie:
+        return jsonify({'error': 'Numero de serie no proporcionado'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # OJO: ajusta el nombre exacto del campo si en tu tabla es distinto.
+        sql = "SELECT COUNT(*) AS CNT FROM " + DB + ".ZAPPVALIDAOF WHERE NSERIE_0 = ?"
+        cursor.execute(sql, num_serie)
+        row = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        cnt = row[0] if row else 0
+        return jsonify({'existe': cnt > 0, 'total': cnt})
+
+    except pyodbc.Error as e:
+        return jsonify({'error': f'Error de base de datos: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
+
+
 # Endpoint para imprimir una etiqueta al finalizar el escaneo de todos los componentes de la OF
 @app.route('/imprimir', methods=['POST'])
 def imprimir_etiqueta():

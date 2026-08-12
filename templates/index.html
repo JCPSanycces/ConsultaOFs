@@ -269,6 +269,19 @@
             </div>
         </div>
 
+        <!-- POPUP ERROR: SERIE YA LEIDA -->
+        <div id="popupSerieYaLeida" class="popup-overlay oculto" style="display:none">
+        <div class="popup-caja">
+            <div class="popup-icono popup-icono-aviso">⚠</div>
+            <h2>Serie ya leída</h2>
+            <p>Este número de serie ya ha sido leído con anterioridad. ¿Leer de nuevo?</p>
+            <div class="popup-botones">
+            <button onclick="popupSerieYaLeidaSi()" class="btn-popup btn-popup-no">Sí</button>
+            <button onclick="popupSerieYaLeidaNo()" class="btn-popup btn-popup-si">No</button>
+            </div>
+        </div>
+        </div>
+
     </main>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
