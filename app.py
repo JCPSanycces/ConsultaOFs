@@ -160,12 +160,12 @@ def registrar_validacion():
 
         sql = (
                 "INSERT INTO " + DB + ".ZAPPVALIDAOF "
-                "(MFGNUM_0, MFGLIN_0, ITMREF_0, NSERIE_0, CREDATTIM_0, UPDDATTIM_0, "
+                "(MFGNUM_0, MFGLIN_0, ITMREF_0, NSERIE_0, ZPROCESADO_0, CREDATTIM_0, UPDDATTIM_0, "
                 "AUUID_0, CREUSR_0, UPDUSR_0, ZCORREOUSER_0, ZFECHACREA_0, ZHORACREA_0) "
-                "VALUES (?, ?, ?, ?, GETDATE(), GETDATE(), "
+                "VALUES (?, ?, ?, ?, ?, GETDATE(), GETDATE(), "
                 "CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?, ?, ?)"
         )
-        cursor.execute(sql, num_of, linea, articulo, num_serie, correo, fecha_hoy, hora_hoy)
+        cursor.execute(sql, num_of, linea, articulo, num_serie, 2, correo, fecha_hoy, hora_hoy)
 
         conn.commit()
         cursor.close()
