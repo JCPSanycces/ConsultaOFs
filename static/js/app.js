@@ -17,6 +17,7 @@ let correoUsuario   = '';
 let lineaOf         = '';
 let articuloOf      = '';
 let qtyLanzada      = 0;
+let descArticuloOf  = '';
 
 
 // ── EVENTOS ───────────────────────────────────────────
@@ -232,6 +233,7 @@ function mostrarResultados(datos) {
     lineaOf = d.LINEA_OF_0 || '';
 
     articuloOf = d.CODART_OF_0 || '';
+    descArticuloOf = d.DESART_OF_0 || '';
 
     const qty = Number(d.QTY_LANZADA_0);
     qtyLanzada = Number.isFinite(qty) ? Math.trunc(qty) : 0;
@@ -496,7 +498,9 @@ async function registrarValidacion(numOf, numSerie) {
                 num_serie: numSerie || '',
                 correo:    correoUsuario || '',
                 linea:     lineaOf || '',
-                articulo:  articuloOf || ''
+                articulo:  articuloOf || '',
+                descripcion: descArticuloOf || '',
+                cantidad_lanzada: qtyLanzada || 0
             })
         });
         const json = await resp.json();

@@ -158,6 +158,8 @@ def registrar_validacion():
     ahora     = datetime.now()
     fecha_hoy = ahora.strftime('%d/%m/%Y')
     hora_hoy  = ahora.strftime('%H:%M:%S')
+    descripcion = request.json.get('descripcion', '').strip()
+    cantidad_lanzada = request.json.get('cantidad_lanzada', 0)
 
     print(f'[REGISTRAR] num_of={num_of}, num_serie={num_serie}, correo={correo}, linea={linea}')
 
@@ -217,13 +219,13 @@ def registrar_validacion():
 
         sql = (
                 "INSERT INTO " + DB + ".ZAPPVALIDAOF "
-                "(MFGNUM_0, MFGLIN_0, ITMREF_0, NSERIE_0, ZPROCESADO_0, CREDATTIM_0, UPDDATTIM_0, "
+                "(MFGNUM_0, MFGLIN_0, ITMREF_0, ITMDES_0, UOMEXTQTY_0, NSERIE_0, ZPROCESADO_0, CREDATTIM_0, UPDDATTIM_0, "
                 "AUUID_0, CREUSR_0, UPDUSR_0, ZCORREOUSER_0, ZFECHACREA_0, ZHORACREA_0) "
-                "VALUES (?, ?, ?, ?, ?, GETDATE(), GETDATE(), "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE(), "
                 "CONVERT(binary(16), NEWID()), 'ADMIN', 'ADMIN', ?, ?, ?)"
         )
-        cursor.execute(sql, num_of, linea, articulo, num_serie, zprocesado, correo, fecha_hoy, hora_hoy)
-
+        cursor.execute(sql, num_of, linea, articulo, descripcion, cantidad_lanzada, num_serie, zprocesado, correo, fecha_hoy, hora_hoy)
+        
         conn.commit()
         cursor.close()
         conn.close()
