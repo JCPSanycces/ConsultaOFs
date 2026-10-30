@@ -375,8 +375,8 @@ def imprimir_etiqueta():
     # ── Etiqueta ZPL ZEBRA ───────────────────────────────────────────
     # Ajusta ^LL (altura etiqueta) y ^PW (ancho) segun el tamaño
     # de tus etiquetas. Los valores son en dots a 203dpi.
-    # ^LL203 = etiqueta de 1 pulgada de alto (25mm)
-    # ^PW609 = etiqueta de 3 pulgadas de ancho (76mm)
+    # ^LL482 = etiqueta de 1 pulgada de alto (60mm)
+    # ^PW812 = etiqueta de 3 pulgadas de ancho (100mm)
     zpl_zebra = (
         "^XA"
         "^CI28"
